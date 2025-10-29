@@ -1,6 +1,5 @@
 from db_manager import SessionLocal, Ingredient
 
-
 def add_ingredient(name, quantity, unit):
     session = SessionLocal()
     ingredients = Ingredient(name=name,quantity=quantity,unit=unit)

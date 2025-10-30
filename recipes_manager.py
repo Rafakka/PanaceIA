@@ -16,7 +16,7 @@ def add_recipe(name, steps, ingredient_data):
 
 def list_recipes():
     session = SessionLocal()
-    recipies = session.query(Recipe).all()
+    recipies = session.query(Recipe.name).all()
     session.close()
     return recipies
 

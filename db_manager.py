@@ -19,9 +19,10 @@ class Recipe(Base):
     __tablename__="recipes"
 
     id = Column(Integer, primary_key=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True, nullable=False)
     steps = Column(String)
-    recipe_ingredients = relationship("RecipeIngredient", back_populates="ingredients")
+    recipe_ingredients = relationship("RecipeIngredient", back_populates="recipes", 
+    cascade="all, delete-orphan")
 
 class Ingredient(Base):
     __tablename__="ingredients"

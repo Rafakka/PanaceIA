@@ -1,8 +1,13 @@
 from db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
 
-def add_recipe(name, steps, ingredient_data):
+def add_recipe(recipe_data:dict):
+    name  = recipe_data["name"]
+    steps = recipe_data["steps"]
+    ingredient_data = recipe_data["ingredients"]
+
     session = SessionLocal()
     recipe = Recipe(name=name, steps=steps)
+    session.add(recipe)
 
     for data in ingredient_data:
         ingredient = session.query(ingredient).filter_by(name=data["name"]).first()
@@ -11,8 +16,8 @@ def add_recipe(name, steps, ingredient_data):
             session.add(ingredient)
             link = RecipeIngredient (recipe=recipe, ingredient=ingredient, quantity=data["quantity"])
             session.add(link)
-            session.commit()
-            session.close()
+    session.commit()
+    session.close()
 
 def list_recipes():
     session = SessionLocal()
@@ -28,7 +33,7 @@ def remove_recipe(recipe_name):
         session.commit()
     session.close()
 
-def remove_ingredients_from_recipe(recipe_name, ingredient_name):
+def remove_ingredient_from_recipe(recipe_name, ingredient_name):
     session = SessionLocal()
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not target:

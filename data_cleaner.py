@@ -41,19 +41,19 @@ def normalize_unit(value: str) -> str:
     v= value.strip().lower()
     return unit_map.get(v,v)
 
-def clean_ingredients(data:dict) -> dict:
-    return {
-        "name":normalize_string(data.get("name")),
-        "quantity":normalize_quantity(data.get("quantity")),
-        "unit":normalize_unit(data.get("unit"))
-    }
-    
 def clean_recipe(data:dict) -> dict:
     return {
         "name":normalize_string(data.get("name")),
         "steps":normalize_string(data.get("steps")),
         "ingredients":[clean_ingredients(i) for i in data.get("ingredients",[])]
     }
+
+def apply_cleaning(data: dict, cleaning_map: dict):
+    cleaned = {}
+    for key, func in cleaning_map.items():
+        if key in data and data[key] is not None:
+            cleaned[key] = func(data[key])
+    return cleaned
 
 def validate_and_clean_ingredient(raw_data: dict):
     try:

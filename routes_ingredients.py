@@ -7,16 +7,20 @@ from ingredients_manager import (
     update_ingredient_quantity,
     remove_ingredient
 )
-from data_cleaner import normalize_string, normalize_quantity, clean_ingredient
+from data_cleaner import normalize_string, normalize_quantity, apply_cleaning
 from schemas import IngredientSchema, UpdateIngredientNameSchema
 
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 @router.post("/", status_code=201)
-def add_ingredient_endpoint(ingredient: IngredientSchema):
-    clean_data = clean_ingredient(ingredient.dict())
-    result = add_ingredient(clean_data)
-    return result
+def add_ingredient_endpoint(update_data: IngredientSchema):
+    cleaning_map = {
+        "name":normalize_string,
+        "quantity":normalize_quantity,
+        "unit":normalize_unit
+    }
+    clean_update = apply_cleaning(update_data.dict(), cleaning_map)
+    return add_ingredient(clean_update)
 
 @router.get("/")
 def list_ingredients_endpoint():
@@ -29,20 +33,26 @@ def get_ingredient_endpoint(name: str):
 
 @router.put("/name", status_code=200)
 def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
-    old_name = normalize_string(update_data.old_name)
-    new_name = normalize_string(update_data.new_name)
-    return update_ingredient_name({"old_name": old_name, "new_name": new_name})
+    cleaning_map = {
+        "old_name": normalize_string,
+        "new_name": normalize_string
+    }
+    clean_update = apply_cleaning(update_data.dict(), cleaning_map)
+    return update_ingredient_name(clean_update)
 
 @router.put("/quantity", status_code=200)
 def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
-    name = normalize_string(update_data.get("name"))
-    new_quantity = normalize_quantity(update_data.get("new_quantity"))
-    
-    clean_update = {"name": name, "new_quantity": new_quantity}
-    result = update_ingredient_quantity(clean_update)
-    return result
-    
+    cleaning_map = {
+        "name": normalize_string,
+        "new_quantity": normalize_quantity
+    }
+    clean_update = apply_cleaning(update_data, cleaning_map)
+    return update_ingredient_quantity(clean_update)
+
 @router.delete("/", status_code=200)
 def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
-    name = normalize_string(ingredient_data.get("name"))
-    return remove_ingredient({"name": name})
+    cleaning_map = {
+        "name": normalize_string
+    }
+    clean_data = apply_cleaning(ingredient_data, cleaning_map)
+    return remove_ingredient(clean_data)

@@ -36,10 +36,12 @@ def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
 @router.put("/quantity", status_code=200)
 def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
     name = normalize_string(update_data.get("name"))
-    raw_quantity = update_data.get("new_quantity")
-    new_quantity = normalize_quantity(raw_quantity)
-    return update_ingredient_quantity({"name": name, "new_quantity": new_quantity})
-
+    new_quantity = normalize_quantity(update_data.get("new_quantity"))
+    
+    clean_update = {"name": name, "new_quantity": new_quantity}
+    result = update_ingredient_quantity(clean_update)
+    return result
+    
 @router.delete("/", status_code=200)
 def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
     name = normalize_string(ingredient_data.get("name"))

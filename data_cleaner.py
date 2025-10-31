@@ -9,10 +9,10 @@ def normalize_quantity(value) -> float:
 
 def normalize_unit(value: str) -> str:
     unit_map = {
-        "gramas":"Gm",
-        "gramos":"Gm",
-        "gram":"Gm",
-        "gms":"Gm",
+        "gramas":"Grm",
+        "gramos":"Grm",
+        "gram":"Grm",
+        "gms":"Grm",
         "mls":"Mls",
         "mililitros":"Mls",
         "cps":"Cps",

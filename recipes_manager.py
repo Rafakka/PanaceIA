@@ -25,16 +25,23 @@ def list_recipes():
     session.close()
     return recipies
 
-def remove_recipe(recipe_name):
+def remove_recipe(recipe_data:dict):
     session = SessionLocal()
+    recipe_name  = recipe_data.get("name")
+
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
+    
     if target:
         session.delete(target)
         session.commit()
     session.close()
 
-def remove_ingredient_from_recipe(recipe_name, ingredient_name):
+def remove_ingredient_from_recipe(recipe_data:dict):
     session = SessionLocal()
+
+    recipe_name = recipe_data.get("name")
+    ingredient_name = recipe_data.get("ingredient")
+
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not target:
         session.close()
@@ -47,8 +54,12 @@ def remove_ingredient_from_recipe(recipe_name, ingredient_name):
             return     
     session.close()
 
-def update_recipe_name(old_name, new_name):
+def update_recipe_name(recipe_data:dict):
     session = SessionLocal()
+
+    old_name = recipe_data.get("old_name")
+    new_name = recipe_data.get("new_name")
+
     target = session.query(Recipe).filter_by(name=old_name).one_or_none()
     if not target:
         session.close()
@@ -58,8 +69,13 @@ def update_recipe_name(old_name, new_name):
         session.commit()
     session.close()
 
-def update_recipe_ingredient(recipe_name, old_ingredient, new_ingredient):
+def update_recipe_ingredient(recipe_data:dict):
     session = SessionLocal()
+    
+    recipe_name = recipe_data.get("recipe_name")
+    old_ingredient = recipe_data.get("old_ingredient")
+    new_ingredient = recipe_data.get("new_ingredient")
+    
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not target:
         session.close()
@@ -76,8 +92,13 @@ def update_recipe_ingredient(recipe_name, old_ingredient, new_ingredient):
             return
     session.close()
 
-def update_recipe_quantity(recipe_name, ingredient, new_quantity):
+def update_recipe_quantity(recipe_data:dict):
     session = SessionLocal()
+
+    recipe_name = recipe_data("recipe_name")
+    ingredient = recipe_data("ingredient")
+    new_quantity = recipe_data("new_quantity")
+
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not target:
         session.close()

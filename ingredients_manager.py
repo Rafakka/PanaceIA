@@ -27,6 +27,19 @@ def list_ingredients():
     session.close()
     return result
 
+def get_ingredient_name(name: str):
+    session = SessionLocal()
+    ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
+    if not ingredient:
+        session.close()
+        return {"status": "error", "message": f"'{name}' not found."}
+    data = {
+        "name": ingredient.name,
+        "quantity": ingredient.quantity,
+        "unit": ingredient.unit
+    }
+    session.close()
+    return {"status": "success", "data": data}
 
 def update_ingredient_name(ingredient_data: dict):
     session = SessionLocal()
@@ -37,9 +50,13 @@ def update_ingredient_name(ingredient_data: dict):
     if not ingredient:
         session.close()
         return {"status": "error", "message": f"'{old_name}' not found."}
-
     ingredient.name = new_name
     session.commit()
+    data = {
+        "name": ingredient.name,
+        "quantity": ingredient.quantity,
+        "unit": ingredient.unit
+    }
     session.close()
     return {"status": "success", "updated": old_name, "new_name": new_name}
 

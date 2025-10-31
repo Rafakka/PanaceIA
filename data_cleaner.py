@@ -1,3 +1,5 @@
+from schemas import IngredientSchema, RecipeSchema
+
 def normalize_string(value:str) ->str:
     return value.strip().title() if isinstance(value,str) else value
 
@@ -52,3 +54,21 @@ def clean_recipe(data:dict) -> dict:
         "steps":normalize_string(data.get("steps")),
         "ingredients":[clean_ingredients(i) for i in data.get("ingredients",[])]
     }
+
+def validate_and_clean_ingredient(raw_data: dict):
+    try:
+        valid = IngredientSchema(**raw_data)
+    except ValidationError as e:
+        return {"status": "error", "message": e.errors()}
+
+    clean_data = clean_ingredient(valid.dict())
+    return {"status": "success", "data": clean_data}
+
+def validate_and_clean_recipe(raw_data: dict):
+    try:
+        valid = RecipeSchema(**raw_data)
+    except ValidationError as e:
+        return {"status": "error", "message": e.errors()}
+
+    clean_data = clean_recipe(valid.dict())
+    return {"status": "success", "data": clean_data}

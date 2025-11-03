@@ -1,0 +1,1 @@
+::: app.core.modules.recipes.routes_recipes

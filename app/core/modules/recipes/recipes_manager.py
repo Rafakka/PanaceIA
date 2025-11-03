@@ -3,6 +3,31 @@ from app.core.data_cleaner import normalize_string, normalize_quantity, normaliz
 
 
 def add_recipe(recipe_data: dict):
+
+    """
+        Add a new recipe to the database.
+
+        Args:
+            recipe_data (dict): A dictionary containing:
+                - `name` (str): Recipe name.
+                - `steps` (str): Instructions for preparation.
+                - `ingredients` (list[dict]): Each dict has
+                `name`, `quantity`, and `unit`.
+
+        Returns:
+            dict: A message indicating whether the recipe was created successfully.
+
+        Example:
+            ```python
+            add_recipe({
+                "name": "Pancakes",
+                "steps": "Mix and fry",
+                "ingredients": [
+                    {"name": "Flour", "quantity": 200, "unit": "Grm"}
+                ]
+            })
+            ```
+    """
     session = SessionLocal()
 
     recipe_clean_map = {
@@ -50,6 +75,20 @@ def add_recipe(recipe_data: dict):
 
 
 def list_recipes():
+
+    """
+    List all recipes inserted in the database.
+    Args:
+        None
+
+    Returns:
+        Data: a list of recipes of name and steps with ingredients list.
+
+    Example:
+        status :success, data: name: Pasta, steps: boil and rise, pour sauce over it.
+        Ingredients: Pasta 300g, Tomato sauce 150ml
+    """
+    
     session = SessionLocal()
     recipes = session.query(Recipe).all()
     result = [{"name": r.name, "steps": r.steps} for r in recipes]
@@ -58,6 +97,21 @@ def list_recipes():
 
 
 def get_recipe_by_name(name: str):
+
+    """
+        Get a new recipe by name from the database.
+
+        Args:
+            name (str): Recipe's name
+
+        Returns:
+            A dict message indicating whether the recipe was created successfully, or not plus data containing name, steps and a list of ingredients of the said recipe.
+
+        Example:
+            ```python
+            get_recipe_by_name(name)
+            ```
+    """
     session = SessionLocal()
 
     clean_name = normalize_string(name)
@@ -76,6 +130,26 @@ def get_recipe_by_name(name: str):
 
 
 def remove_recipe(recipe_data: dict):
+
+    """
+        Remove a recipe from the database.
+
+        Args:
+            recipe_data (dict): A dictionary containing:
+                - `name` (str): Recipe name.
+                `name`
+
+        Returns:
+            dict: A message indicating whether the recipe was removed successfully.
+
+        Example:
+            ```python
+            remove_recipe({
+                "name": "Pancakes",
+            })
+            ```
+    """
+
     session = SessionLocal()
     raw_recipe_name = recipe_data.get("name")
     recipe_name = normalize_string(raw_recipe_name)

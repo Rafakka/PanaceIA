@@ -1,0 +1,1 @@
+::: app.core.modules.recipes.recipes_manager

@@ -1,0 +1,29 @@
+site_name: PanaceIA
+site_description: "AI-ready Recipe Management API"
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.annotate
+    - content.tabs.link
+nav:
+  - Home: index.md
+  - Core:
+      - Data Cleaner: core/data_cleaner.md
+      - Database: core/db_manager.md
+      - Schemas: core/schemas.md
+  - Modules:
+      - Ingredients Manager: core/modules/ingredients/ingredients_manager.md
+      - Ingredients Routes: core/modules/ingredients/routes_ingredients.md
+      - Recipes Manager: core/modules/recipes/recipes_manager.md
+      - Recipes Routes: core/modules/recipes/routes_recipes.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.append("app")
+          paths: [/app]

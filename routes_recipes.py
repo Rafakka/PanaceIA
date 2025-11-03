@@ -7,7 +7,7 @@ from recipes_manager import (
     remove_recipe,
     remove_ingredient_from_recipe,
     update_recipe_name,
-    update_recipe_ingredient,
+    update_recipe_ingredient_name,
     update_recipe_quantity
 )
 from data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning

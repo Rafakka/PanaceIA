@@ -56,12 +56,15 @@ def list_recipes():
 
 def get_recipe_by_name(name: str):
     session = SessionLocal()
+
+    clean_recipe_name = normalize_string(name)
+    name = clean_recipe_name["name"]
+
     recipe = session.query(Recipe).filter_by(name=name).one_or_none()
 
     if not recipe:
         session.close()
         return {"status": "error", "message": f"'{name}' not found."}
-
     ingredients = [
         {
             "name": ri.ingredient.name,
@@ -70,19 +73,20 @@ def get_recipe_by_name(name: str):
         }
         for ri in recipe.recipe_ingredients
     ]
-
     data = {
         "name": recipe.name,
         "steps": recipe.steps,
         "ingredients": ingredients
     }
-
     session.close()
     return {"status": "success", "data": data}
 
 def remove_recipe(recipe_data: dict):
     session = SessionLocal()
-    recipe_name = recipe_data.get("name")
+    raw_recipe_name = recipe_data.get("name")
+
+    recipe_name = normalize_string(raw_recipe_name)
+    
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
 
     if not target:
@@ -96,13 +100,17 @@ def remove_recipe(recipe_data: dict):
 
 def remove_ingredient_from_recipe(recipe_data: dict):
     session = SessionLocal()
-    recipe_name = recipe_data.get("name")
-    ingredient_name = recipe_data.get("ingredient")
 
-    recipe = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
+    raw_recipe_name = recipe_data.get("name")
+    raw_ingredient_name = recipe_data.get("ingredient")
+
+    cleaned_recipe_name = normalize_string(raw_ingredient_name)
+    ingredient_name = normalize_string(raw_ingredient_name)
+
+    recipe = session.query(Recipe).filter_by(name=cleaned_recipe_name).one_or_none()
     if not recipe:
         session.close()
-        return {"status": "error", "message": f"'{recipe_name}' not found."}
+        return {"status": "error", "message": f"'{cleaned_recipe_name}' not found."}
 
     for link in recipe.recipe_ingredients:
         if link.ingredient.name == ingredient_name:
@@ -125,8 +133,15 @@ def remove_ingredient_from_recipe(recipe_data: dict):
 def update_recipe_name(recipe_data:dict):
     session = SessionLocal()
 
-    old_name = recipe_data.get("old_name")
-    new_name = recipe_data.get("new_name")
+    recipe_clean_map = {
+        "old_name": normalize_string,
+        "new_name": normalize_string
+    }
+
+    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+
+    old_name = clean_recipe["old_name"]
+    new_name = clean_recipe["new_name"]
 
     target = session.query(Recipe).filter_by(name=old_name).one_or_none()
     if not target:
@@ -138,11 +153,20 @@ def update_recipe_name(recipe_data:dict):
         session.close()
         return {"status": "success", "updated": old_name, "new_name": new_name}
 
-def update_recipe_ingredient(recipe_data: dict):
+def update_recipe_ingredient_name(recipe_data: dict):
     session = SessionLocal()
-    recipe_name = recipe_data.get("recipe_name")
-    old_ingredient = recipe_data.get("old_ingredient")
-    new_ingredient = recipe_data.get("new_ingredient")
+
+    recipe_clean_map = {
+        "old_ingredient": normalize_string,
+        "new_ingredient": normalize_string,
+        "recipe_name":normalize_string
+    }
+
+    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+
+    old_ingredient = clean_recipe["old_ingredient"]
+    new_ingredient = clean_recipe["new_ingredient"]
+    recipe_name = clean_recipe["recipe_name"]
 
     recipe = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not recipe:
@@ -164,9 +188,18 @@ def update_recipe_ingredient(recipe_data: dict):
 
 def update_recipe_quantity(recipe_data: dict):
     session = SessionLocal()
-    recipe_name = recipe_data.get("recipe_name")
-    ingredient_name = recipe_data.get("ingredient")
-    new_quantity = recipe_data.get("new_quantity")
+
+    recipe_clean_map = {
+        "recipe_name": normalize_string,
+        "ingredient": normalize_string,
+        "new_quantity":normalize_string
+    }
+
+    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+
+    recipe_name = clean_recipe["recipe_name"]
+    ingredient_name = clean_recipe["ingredient"]
+    new_quantity = clean_recipe ["new_quantity"]
 
     recipe = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not recipe:

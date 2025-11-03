@@ -1,21 +1,38 @@
 from db_manager import SessionLocal, Ingredient
+from data_cleaner import normalize_string, normalize_quantity, normalize_unit
 
 def add_ingredient(ingredient_data: dict):
     session = SessionLocal()
-    name = ingredient_data.get("name")
-    quantity = ingredient_data.get("quantity")
-    unit = ingredient_data.get("unit")
 
-    if not name:
+    ingredient_clean_map = {
+        "name": normalize_string,
+        "quantity": normalize_quantity,
+        "unit":normalize_unit
+    }
+
+    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
+
+    name = clean_ingredient["name"]
+    quantity = clean_ingredient["quantity"]
+    unit = clean_ingredient["unit"]
+
+
+    ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
+    if not ingredient:
+        ingredient = Ingredient(name=name, unit=unit)
+        session.add(ingredient)
+
+        link = RecipeIngredient(
+        recipe=recipe,
+        ingredient=ingredient,
+        quantity=data["quantity"]
+        )
+        session.commit(link)
         session.close()
-        return {"status": "error", "message": "Ingredient name is required."}
+        return {"status": "success", "name": name}
 
-    ingredient = Ingredient(name=name, quantity=quantity, unit=unit)
-    session.add(ingredient)
-    session.commit()
     session.close()
-    return {"status": "success", "name": name}
-
+    return {"status": "error","message": f" Ingredient, '{name}' already in Database."}
 
 def list_ingredients():
     session = SessionLocal()

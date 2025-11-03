@@ -7,7 +7,7 @@ from ingredients_manager import (
     update_ingredient_quantity,
     remove_ingredient
 )
-from data_cleaner import normalize_string, normalize_quantity, apply_cleaning
+from data_cleaner import normalize_string, normalize_quantity, apply_cleaning, normalize_unit
 from schemas import IngredientSchema, UpdateIngredientNameSchema
 
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
@@ -49,7 +49,7 @@ def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
     clean_update = apply_cleaning(update_data, cleaning_map)
     return update_ingredient_quantity(clean_update)
 
-@routes.put("/unit", status_code=200)
+@router.put("/unit", status_code=200)
 def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
     cleaning_map = {
         "name" : normalize_string,

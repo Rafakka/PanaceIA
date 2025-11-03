@@ -15,7 +15,7 @@ def add_recipe(recipe_data: dict):
                 `name`, `quantity`, and `unit`.
 
         Returns:
-            dict: A message indicating whether the recipe was created successfully.
+            data (dict): A message indicating whether the recipe was created successfully.
 
         Example:
             ```python
@@ -78,15 +78,20 @@ def list_recipes():
 
     """
     List all recipes inserted in the database.
-    Args:
-        None
 
     Returns:
-        Data: a list of recipes of name and steps with ingredients list.
+    Data (dict): Returns a list of recipes of name and steps with ingredients list.
+
+    Args:
+        name (str): Return name of recipes:
+        steps (str): Return steps of recipes:
+        ingredients (dict) : Return a list of ingredients.
+        `name`,`steps`,`ingredients`
 
     Example:
-        status :success, data: name: Pasta, steps: boil and rise, pour sauce over it.
-        Ingredients: Pasta 300g, Tomato sauce 150ml
+        ```python
+            list_recipes()
+        ```
     """
     
     session = SessionLocal()
@@ -101,11 +106,11 @@ def get_recipe_by_name(name: str):
     """
         Get a new recipe by name from the database.
 
-        Args:
+        Args: 
             name (str): Recipe's name
 
         Returns:
-            A dict message indicating whether the recipe was created successfully, or not plus data containing name, steps and a list of ingredients of the said recipe.
+            Data (dict): Returns a dict message indicating whether the recipe was created successfully, or not plus data containing name, steps and a list of ingredients of the said recipe.
 
         Example:
             ```python
@@ -140,12 +145,12 @@ def remove_recipe(recipe_data: dict):
                 `name`
 
         Returns:
-            dict: A message indicating whether the recipe was removed successfully.
-
+            Data (dict): Returns a message indicating whether the recipe was removed successfully.
+        
         Example:
             ```python
             remove_recipe({
-                "name": "Pancakes",
+                "name": "Pancakes"
             })
             ```
     """
@@ -166,6 +171,28 @@ def remove_recipe(recipe_data: dict):
 
 
 def remove_ingredient_from_recipe(recipe_data: dict):
+
+    """
+        Remove an ingredient from the recipe from the database.
+
+        Args:
+            recipe_data (dict): A dictionary containing:
+                - `name` (str): Recipe name.
+                - `ingredient` (str): Ingredient name.
+                `name`, `ingredient`
+
+        Returns:
+            Data (dict): Returns a message indicating whether the ingredient of a recipe was removed successfully.
+
+        Example:
+            ```python
+            remove_ingredient_from_recipe({
+                "name": "Pancakes",
+                "ingredient" : "eggs"
+            })
+            ```
+    """
+
     session = SessionLocal()
 
     raw_recipe_name = recipe_data.get("name")
@@ -198,6 +225,28 @@ def remove_ingredient_from_recipe(recipe_data: dict):
     return {"status": "error", "message": f"Ingredient '{ingredient_name}' not found in recipe."}
 
 def update_recipe_name(recipe_data: dict):
+
+    """
+        Update recipe's name from the database.
+
+        Args:
+            recipe_data (dict): A dictionary containing:
+                - `new_name` (str): Recipe's new name.
+                - `old_name` (str): Recipe's old name.
+                `new_name`,`old_name`
+
+        Returns:
+            Data (dict): Returns a message indicating whether the recipe was updated successfully.
+        
+        Example:
+            ```python
+            update_recipe_name({
+                "new_name": "Pancakes",
+                "old_name": "Light Pancakes"
+            })
+            ```
+    """
+
     session = SessionLocal()
 
     recipe_clean_map = {
@@ -213,7 +262,6 @@ def update_recipe_name(recipe_data: dict):
     if not target:
         session.close()
         return {"status": "error", "message": f"'{old_name}' not found."}
-
     target.name = new_name
     session.commit()
     session.close()

@@ -1,4 +1,5 @@
 from schemas import IngredientSchema, RecipeSchema
+from pydantic import ValidationError
 
 def normalize_string(value:str) ->str:
     return value.strip().title() if isinstance(value,str) else value
@@ -41,19 +42,25 @@ def normalize_unit(value: str) -> str:
     v= value.strip().lower()
     return unit_map.get(v,v)
 
-def clean_recipe(data:dict) -> dict:
+def clean_recipe(data: dict) -> dict:
     return {
-        "name":normalize_string(data.get("name")),
-        "steps":normalize_string(data.get("steps")),
-        "ingredients":[clean_ingredients(i) for i in data.get("ingredients",[])]
+        "name": normalize_string(data.get("name")),
+        "steps": normalize_string(data.get("steps")),
+        "ingredients": [
+            apply_cleaning(i, {
+                "name": normalize_string,
+                "quantity": normalize_quantity,
+                "unit": normalize_unit
+            }) for i in data.get("ingredients", [])
+        ]
     }
 
 def apply_cleaning(data: dict, cleaning_map: dict):
-    cleaned = {}
-    for key, func in cleaning_map.items():
-        if key in data and data[key] is not None:
-            cleaned[key] = func(data[key])
-    return cleaned
+    return {
+        key: cleaning_map[key](value)
+        for key, value in data.items()
+        if key in cleaning_map and value is not None
+    }
 
 def validate_and_clean_ingredient(raw_data: dict):
     try:

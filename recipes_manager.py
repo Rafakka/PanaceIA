@@ -1,6 +1,7 @@
 from db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
 from data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 
+
 def add_recipe(recipe_data: dict):
     session = SessionLocal()
 
@@ -31,13 +32,17 @@ def add_recipe(recipe_data: dict):
     session.add(recipe)
 
     for data in cleaned_ingredients:
-            ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
-            if not ingredient:
-                ingredient = Ingredient(name=data["name"], unit=data["unit"])
-                session.add(ingredient)
+        ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
+        if not ingredient:
+            ingredient = Ingredient(name=data["name"], unit=data["unit"])
+            session.add(ingredient)
 
-            link = RecipeIngredient(recipe=recipe, ingredient=ingredient, quantity=data["quantity"])
-            session.add(link)
+        link = RecipeIngredient(
+            recipe=recipe,
+            ingredient=ingredient,
+            quantity=data["quantity"]
+        )
+        session.add(link)
 
     session.commit()
     session.close()
@@ -47,46 +52,33 @@ def add_recipe(recipe_data: dict):
 def list_recipes():
     session = SessionLocal()
     recipes = session.query(Recipe).all()
-    result = [
-        {"name": r.name, "steps": r.steps}
-        for r in recipes
-    ]
+    result = [{"name": r.name, "steps": r.steps} for r in recipes]
     session.close()
     return {"status": "success", "data": result}
+
 
 def get_recipe_by_name(name: str):
     session = SessionLocal()
 
-    clean_recipe_name = normalize_string(name)
-    name = clean_recipe_name["name"]
-
-    recipe = session.query(Recipe).filter_by(name=name).one_or_none()
-
+    clean_name = normalize_string(name)
+    recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
     if not recipe:
         session.close()
-        return {"status": "error", "message": f"'{name}' not found."}
+        return {"status": "error", "message": f"'{clean_name}' not found."}
+
     ingredients = [
-        {
-            "name": ri.ingredient.name,
-            "quantity": ri.quantity,
-            "unit": ri.ingredient.unit
-        }
+        {"name": ri.ingredient.name, "quantity": ri.quantity, "unit": ri.ingredient.unit}
         for ri in recipe.recipe_ingredients
     ]
-    data = {
-        "name": recipe.name,
-        "steps": recipe.steps,
-        "ingredients": ingredients
-    }
+    data = {"name": recipe.name, "steps": recipe.steps, "ingredients": ingredients}
     session.close()
     return {"status": "success", "data": data}
+
 
 def remove_recipe(recipe_data: dict):
     session = SessionLocal()
     raw_recipe_name = recipe_data.get("name")
-
     recipe_name = normalize_string(raw_recipe_name)
-    
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
 
     if not target:
@@ -98,13 +90,14 @@ def remove_recipe(recipe_data: dict):
     session.close()
     return {"status": "success", "deleted": recipe_name}
 
+
 def remove_ingredient_from_recipe(recipe_data: dict):
     session = SessionLocal()
 
     raw_recipe_name = recipe_data.get("name")
     raw_ingredient_name = recipe_data.get("ingredient")
 
-    cleaned_recipe_name = normalize_string(raw_ingredient_name)
+    cleaned_recipe_name = normalize_string(raw_recipe_name)
     ingredient_name = normalize_string(raw_ingredient_name)
 
     recipe = session.query(Recipe).filter_by(name=cleaned_recipe_name).one_or_none()
@@ -130,14 +123,13 @@ def remove_ingredient_from_recipe(recipe_data: dict):
     session.close()
     return {"status": "error", "message": f"Ingredient '{ingredient_name}' not found in recipe."}
 
-def update_recipe_name(recipe_data:dict):
+def update_recipe_name(recipe_data: dict):
     session = SessionLocal()
 
     recipe_clean_map = {
         "old_name": normalize_string,
         "new_name": normalize_string
     }
-
     clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
 
     old_name = clean_recipe["old_name"]
@@ -147,11 +139,11 @@ def update_recipe_name(recipe_data:dict):
     if not target:
         session.close()
         return {"status": "error", "message": f"'{old_name}' not found."}
-    if target:
-        target.name = new_name
-        session.commit()
-        session.close()
-        return {"status": "success", "updated": old_name, "new_name": new_name}
+
+    target.name = new_name
+    session.commit()
+    session.close()
+    return {"status": "success", "updated": old_name, "new_name": new_name}
 
 def update_recipe_ingredient_name(recipe_data: dict):
     session = SessionLocal()
@@ -159,9 +151,8 @@ def update_recipe_ingredient_name(recipe_data: dict):
     recipe_clean_map = {
         "old_ingredient": normalize_string,
         "new_ingredient": normalize_string,
-        "recipe_name":normalize_string
+        "recipe_name": normalize_string
     }
-
     clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
 
     old_ingredient = clean_recipe["old_ingredient"]
@@ -179,10 +170,12 @@ def update_recipe_ingredient_name(recipe_data: dict):
             if not new_ing_obj:
                 new_ing_obj = Ingredient(name=new_ingredient, unit=recipe_data.get("unit", ""))
                 session.add(new_ing_obj)
+
             link.ingredient = new_ing_obj
             session.commit()
             session.close()
             return {"status": "success", "updated": old_ingredient, "new_ingredient": new_ingredient}
+
     session.close()
     return {"status": "error", "message": f"Ingredient '{old_ingredient}' not found in '{recipe_name}'."}
 
@@ -192,14 +185,13 @@ def update_recipe_quantity(recipe_data: dict):
     recipe_clean_map = {
         "recipe_name": normalize_string,
         "ingredient": normalize_string,
-        "new_quantity":normalize_string
+        "new_quantity": normalize_quantity
     }
-
     clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
 
     recipe_name = clean_recipe["recipe_name"]
     ingredient_name = clean_recipe["ingredient"]
-    new_quantity = clean_recipe ["new_quantity"]
+    new_quantity = clean_recipe["new_quantity"]
 
     recipe = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
     if not recipe:
@@ -215,4 +207,3 @@ def update_recipe_quantity(recipe_data: dict):
 
     session.close()
     return {"status": "error", "message": f"Ingredient '{ingredient_name}' not found in '{recipe_name}'."}
-

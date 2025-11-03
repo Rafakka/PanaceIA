@@ -76,6 +76,20 @@ def update_ingredient_quantity(ingredient_data: dict):
     session.close()
     return {"status": "success", "ingredient": name, "new_quantity": new_quantity}
 
+def update_ingredient_unit(ingredient_data: dict):
+    session = SessionLocal()
+    name = ingredient_data.get("name")
+    new_quantity = ingredient_data.get("new_unit")
+
+    ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
+    if not ingredient:
+        session.close()
+        return {"status": "error", "message": f"'{name}' not found."}
+
+    ingredient.unit = new_unit
+    session.commit()
+    session.close()
+    return {"status": "success", "ingredient": name, "new_unit": new_unit}
 
 def remove_ingredient(ingredient_data: dict):
     session = SessionLocal()

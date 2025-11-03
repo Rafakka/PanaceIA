@@ -49,6 +49,15 @@ def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
     clean_update = apply_cleaning(update_data, cleaning_map)
     return update_ingredient_quantity(clean_update)
 
+@routes.put("/unit", status_code=200)
+def update_ingredient_unit(update_data:dict = Body(...)):
+    cleaning_map = {
+        "name" : normalize_string,
+        "new_unit": normalize_string
+    }
+    clean_update = apply_cleaning(update_data, cleaning_map)
+    return update_ingredient_unit(clean_update)
+
 @router.delete("/", status_code=200)
 def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
     cleaning_map = {

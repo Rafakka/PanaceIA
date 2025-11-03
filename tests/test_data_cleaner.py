@@ -1,5 +1,5 @@
 
-from .app.core.data_cleaner import (
+from app.core.data_cleaner import (
     normalize_string, normalize_quantity, normalize_unit,
     validate_and_clean_ingredient, validate_and_clean_recipe
 )

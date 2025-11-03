@@ -1,4 +1,4 @@
-from schemas import IngredientSchema, RecipeSchema
+from app.core.schemas import IngredientSchema, RecipeSchema
 from pydantic import ValidationError
 
 def normalize_string(value:str) ->str:

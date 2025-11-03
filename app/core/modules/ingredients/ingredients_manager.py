@@ -1,5 +1,5 @@
-from db_manager import SessionLocal, Ingredient
-from data_cleaner import normalize_string, normalize_quantity, normalize_unit
+from app.core.db_manager import SessionLocal, Ingredient
+from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit
 
 def add_ingredient(ingredient_data: dict):
     session = SessionLocal()

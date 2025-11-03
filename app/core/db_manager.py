@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
-engine = create_engine("sqlite:///recipes.db", echo=True)
+engine = create_engine("sqlite:///app/database/recipes.db", echo=True)
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
 

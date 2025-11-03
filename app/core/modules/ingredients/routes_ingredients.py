@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body
-from ingredients_manager import (
+from app.core.modules.ingredients.ingredients_manager import (
     add_ingredient,
     list_ingredients,
     get_ingredient_name,
@@ -7,8 +7,8 @@ from ingredients_manager import (
     update_ingredient_quantity,
     remove_ingredient
 )
-from data_cleaner import normalize_string, normalize_quantity, apply_cleaning, normalize_unit
-from schemas import IngredientSchema, UpdateIngredientNameSchema
+from app.core.data_cleaner import normalize_string, normalize_quantity, apply_cleaning, normalize_unit
+from app.core.schemas import IngredientSchema, UpdateIngredientNameSchema
 
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 

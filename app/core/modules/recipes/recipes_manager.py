@@ -1,5 +1,5 @@
-from db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
-from data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core.db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
+from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 
 
 def add_recipe(recipe_data: dict):

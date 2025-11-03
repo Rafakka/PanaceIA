@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body
 from typing import List
-from recipes_manager import (
+from app.core.modules.recipes.recipes_manager import (
     add_recipe,
     list_recipes,
     get_recipe_by_name,
@@ -10,8 +10,8 @@ from recipes_manager import (
     update_recipe_ingredient_name,
     update_recipe_quantity
 )
-from data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
-from schemas import RecipeSchema, IngredientSchema
+from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core.schemas import RecipeSchema, IngredientSchema
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 

@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ingredients_router import router as ingredients_router
-from recipes_router import router as recipes_router
+from routes_ingredients import router as ingredients_router
+from routes_recipes import router as recipes_router
 
 app = FastAPI(
     title="PanaceIA Recipe API",

@@ -1,30 +1,30 @@
-🧠 PanaceIA — Intelligent Recipe Management System
-🍳 Overview
+##🧠 PanaceIA — Intelligent Recipe Management System
+###🍳 Overview
 
 PanaceIA is a modular, intelligent recipe management application that learns user preferences and adapts its suggestions over time.
 Built with FastAPI, SQLAlchemy, and Pydantic, the system allows users to add, organize, and refine recipes while maintaining clean, validated data.
 
 PanaceIA’s architecture was designed for scalability and intelligence — from the database layer to the API endpoints — allowing future integration of machine learning models for automatic recipe recommendations and ingredient substitutions.
 
-⚙️ Core Features
+##⚙️ Core Features
 
-🧩 Modular Architecture — Clear separation of concerns across core, modules, and database layers.
+###🧩 Modular Architecture — Clear separation of concerns across core, modules, and database layers.
 
-🍲 Recipe & Ingredient Management — Full CRUD operations for both entities.
+###🍲 Recipe & Ingredient Management — Full CRUD operations for both entities.
 
-🧼 Data Cleaning Pipeline — Automatic normalization of strings, quantities, and measurement units before database storage.
+###🧼 Data Cleaning Pipeline — Automatic normalization of strings, quantities, and measurement units before database storage.
 
-🧠 Validation with Pydantic — Strict schema enforcement ensures robust and predictable input handling.
+###🧠 Validation with Pydantic — Strict schema enforcement ensures robust and predictable input handling.
 
-⚡ RESTful API with FastAPI — Lightweight, fast, and ready for integration with mobile and web frontends.
+###⚡ RESTful API with FastAPI — Lightweight, fast, and ready for integration with mobile and web frontends.
 
-🔐 Database Persistence — Built on SQLite for local use, easily extendable to PostgreSQL or MySQL.
+###🔐 Database Persistence — Built on SQLite for local use, easily extendable to PostgreSQL or MySQL.
 
-🤖 AI-Ready Foundation — Future modules can include natural language recipe generation and personalized taste learning.
+###🤖 AI-Ready Foundation — Future modules can include natural language recipe generation and personalized taste learning.
 
-🧱 System Architecture
+##🧱 System Architecture
 
-PanaceIA is divided into independent yet connected layers:
+###PanaceIA is divided into independent yet connected layers:
     ```
     app/
     │
@@ -50,7 +50,7 @@ PanaceIA is divided into independent yet connected layers:
     ```
 Each module is designed to work independently while maintaining consistent input/output patterns through shared cleaning and validation utilities.
 
-🧩 Technology Stack
+##🧩 Technology Stack
 
 Layer	Technology	Purpose
 Backend Framework	FastAPI	RESTful API architecture
@@ -60,23 +60,29 @@ Data Cleaning	Custom pipeline	Consistent normalization and sanitation
 Documentation	MkDocs + mkdocstrings	Auto-generated, developer-friendly docs
 Testing	Requests + CLI tests	Endpoint and logic verification
 
-🤖 Future Enhancements
+##🤖 Future Enhancements
 
-🧮 AI-Powered Recommendation Engine — Suggest recipes based on ingredient availability and taste preferences.
+###🧮 AI-Powered Recommendation Engine — Suggest recipes based on ingredient availability and taste preferences.
 
-🧠 Substitution System — Dynamically replace ingredients using embeddings or similarity scoring.
+###🧠 Substitution System — Dynamically replace ingredients using embeddings or similarity scoring.
 
-📱 Mobile Integration — Kotlin client consuming the FastAPI endpoints.
+###📱 Mobile Integration — Kotlin client consuming the FastAPI endpoints.
 
-📊 Usage Analytics — Track popular ingredients and recipes for adaptive recommendations.
+###📊 Usage Analytics — Track popular ingredients and recipes for adaptive recommendations.
 
-🧬 Philosophy
+##🌿 Philosophy
 
-PanaceIA takes inspiration from the world PANACEA, which mean healing thru food.
-Every module, every layer, every normalization step reflects this ethos:
-transforming scattered user input into refined, meaningful information.
+The name PanaceIA honors Panacea, the Greek goddess of the universal remedy — the embodiment of healing through balance and nourishment.
+In this project, the act of eating becomes the modern form of alchemy — where knowledge, flavor, and health merge as one.
 
-✍️ Author
+Food, when understood and respected, becomes both prevention and cure.
+PanaceIA carries this truth into the digital age: a system that learns from what we eat, organizes what sustains us, and helps us transform ingredients into wellness.
+
+This is why PanaceIA exists —
+not merely to manage recipes, but to celebrate eating as the universal remedy,
+the bridge between science and soul, data and vitality.
+
+##✍️ Author
 
 Rafael Kaher
 Developer · Architect · Eternal Student

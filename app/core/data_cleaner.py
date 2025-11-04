@@ -1,16 +1,74 @@
+"""
+data_cleaner.py
+
+Provides all normalization, cleaning, and validation utilities 
+for ensuring consistent and standardized data across the system.
+
+This module sanitizes input data before it reaches the business logic layer,
+handling normalization of strings, quantities, and measurement units.
+It also validates schema integrity using Pydantic models.
+
+Author: Rafael Kaher
+"""
+
 from app.core.schemas import IngredientSchema, RecipeSchema
 from pydantic import ValidationError
 
 def normalize_string(value:str) ->str:
+    """
+    Normalize string values by trimming whitespace and applying title casing.
+
+    Args:
+        value (str): The string to be normalized.
+
+    Returns:
+        str: The cleaned string if valid, otherwise returns the original value.
+
+    Example:
+        ```python
+        normalize_string("  panCAke mix  ")
+        # Returns: 'Pancake Mix'
+        ```
+    """
     return value.strip().title() if isinstance(value,str) else value
 
 def normalize_quantity(value) -> float:
+    """
+    Convert quantity values to floats when possible.
+
+    Args:
+        value (any): A numeric or string value representing quantity.
+
+    Returns:
+        float | None: The converted float value, or None if conversion fails.
+
+    Example:
+        ```python
+        normalize_quantity("200")
+        # Returns: 200.0
+        ```
+    """
     try:
         return float(value)
     except (ValueError, TypeError):
         return None
 
 def normalize_unit(value: str) -> str:
+    """
+    Normalize units of measurement into standardized abbreviations.
+
+    Args:
+        value (str): A string representing a measurement unit.
+
+    Returns:
+        str: The standardized unit if found in the unit map, otherwise the input itself.
+
+    Example:
+        ```python
+        normalize_unit("gramas")
+        # Returns: 'Grm'
+        ```
+    """
     unit_map = {
         "gramas":"Grm",
         "gramos":"Grm",
@@ -44,6 +102,31 @@ def normalize_unit(value: str) -> str:
     return unit_map.get(v,v)
 
 def clean_recipe(data: dict) -> dict:
+    """
+    Clean and normalize a recipe dictionary, including nested ingredients.
+
+    Args:
+        data (dict): Must include:
+            - `name` (str)
+            - `steps` (str)
+            - `ingredients` (list[dict])
+
+    Returns:
+        dict: A fully cleaned recipe dictionary.
+
+    Example:
+        ```python
+        clean_recipe({
+            "name": "Pancakes",
+            "steps": "mix ingredients and fry until golden",
+            "ingredients": [
+                {"name": "flour", "quantity": "200", "unit": "gramas"},
+                {"name": "milk", "quantity": "250", "unit": "mls"}
+            ]
+        })
+        # Returns cleaned name, steps, and ingredients
+        ```
+    """
     return {
         "name": normalize_string(data.get("name")),
         "steps": normalize_string(data.get("steps")),
@@ -57,6 +140,25 @@ def clean_recipe(data: dict) -> dict:
     }
 
 def apply_cleaning(data: dict, cleaning_map: dict):
+    """
+    Apply normalization functions to each key-value pair in a dictionary.
+
+    Args:
+        data (dict): The input dictionary to be cleaned.
+        cleaning_map (dict[str, callable]): A mapping of field names to their cleaning functions.
+
+    Returns:
+        dict: A new dictionary with cleaned key-value pairs.
+
+    Example:
+        ```python
+        apply_cleaning(
+            {"name": "flour", "quantity": "200", "unit": "gramas"},
+            {"name": normalize_string, "quantity": normalize_quantity, "unit": normalize_unit}
+        )
+        # Returns: {'name': 'Flour', 'quantity': 200.0, 'unit': 'Grm'}
+        ```
+    """
     return {
         key: cleaning_map[key](value)
         for key, value in data.items()
@@ -64,6 +166,26 @@ def apply_cleaning(data: dict, cleaning_map: dict):
     }
 
 def validate_and_clean_ingredient(raw_data: dict):
+    """
+    Validate and clean a raw ingredient dictionary.
+
+    Args:
+        raw_data (dict): Must contain:
+            - `name` (str)
+            - `quantity` (float or str)
+            - `unit` (str)
+
+    Returns:
+        dict: A response dictionary with status and cleaned data.
+
+    Example:
+        ```python
+        validate_and_clean_ingredient({
+            "name": "milk", "quantity": "250", "unit": "ml"
+        })
+        # Returns: {"status": "success", "data": {"name": "Milk", "quantity": 250.0, "unit": "Ml"}}
+        ```
+    """
     try:
         valid = IngredientSchema(**raw_data)
     except ValidationError as e:
@@ -73,6 +195,31 @@ def validate_and_clean_ingredient(raw_data: dict):
     return {"status": "success", "data": clean_data}
 
 def validate_and_clean_recipe(raw_data: dict):
+    """
+    Validate and clean a raw recipe dictionary, including nested ingredients.
+
+    Args:
+        raw_data (dict): Must contain:
+            - `name` (str)
+            - `steps` (str)
+            - `ingredients` (list[dict])
+
+    Returns:
+        dict: A response dictionary with status and cleaned data.
+
+    Example:
+        ```python
+        validate_and_clean_recipe({
+            "name": "Pancakes",
+            "steps": "Mix ingredients and fry until golden.",
+            "ingredients": [
+                {"name": "Flour", "quantity": 200, "unit": "Grm"},
+                {"name": "Milk", "quantity": 250, "unit": "Mls"}
+            ]
+        })
+        # Returns: {"status": "success", "data": { ... cleaned recipe ... }}
+        ```
+    """
     try:
         valid = RecipeSchema(**raw_data)
     except ValidationError as e:

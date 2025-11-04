@@ -1,12 +1,12 @@
 """
 routes_recipes.py
 
-Handles all recipe's CRUD endpoints.
-Each endpoint here communicates directly with the logical layer
-and uses the data_cleaner module for safe input normalization.
+Handles all recipe CRUD endpoints.
+Each endpoint communicates directly with the recipe logic layer
+and uses the data_cleaner module to ensure safe input normalization.
 
-All functions return structured dictionaries that can be serialized to JSON
-and consumed directly by FastAPI routes.
+All endpoints return structured dictionaries that can be serialized into JSON
+and consumed by client applications or automation tools.
 
 Author: Rafael Kaher
 """
@@ -32,57 +32,54 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 @router.get("/")
 def list_all_recipes_endpoint():
     """
-    Retrieve all recipes from the database.
+    Retrieve all recipes stored in the database.
 
     Returns:
-        dict: A dictionary with the key `"data"` containing
-        a list of recipes, each including its `name` and `steps`.
+    A dictionary containing a "status" key and a "data" list with each recipe’s name and steps.
 
     Example:
-        ```python
-        list_all_recipes_endpoint()
-        # Returns:
-        # {
-        #   "status": "success",
-        #   "data": [
-        #       {"name": "Pancakes", "steps": "Mix and fry"},
-        #       {"name": "Omelette", "steps": "Beat and cook"}
-        #   ]
-        # }
-        ```
+
+    list_all_recipes_endpoint()
+    # Returns:
+    # {
+    #   "status": "success",
+    #   "data": [
+    #       {"name": "Pancakes", "steps": "Mix and fry"},
+    #       {"name": "Omelette", "steps": "Beat and cook"}
+    #   ]
+    # }
     """
     return list_recipes()
-
-
 
 @router.post("/", status_code=201)
 def add_recipe_endpoint(update_data: RecipeSchema):
     """
-    Create a new recipe in the database.
+    Create a new recipe record in the database.
+    Input data is automatically cleaned and normalized before storage.
 
     Args:
-        update_data (RecipeSchema): A validated Pydantic schema containing:
-            - `name` (str): Recipe name.
-            - `steps` (str): Preparation instructions.
-            - `ingredients` (List[IngredientSchema]): Each ingredient dict must include:
-                - `name` (str)
-                - `quantity` (float)
-                - `unit` (str)
+
+        update_data (RecipeSchema): A validated Pydantic object containing:
+            name (str): Recipe name.
+            steps (str): Preparation instructions.
+        ingredients (List[IngredientSchema]): Each ingredient includes:
+            name (str)
+            quantity (float)
+            unit (str)
 
     Returns:
-        dict: A status message with `"success"` or `"error"`, plus creation details.
+        A dictionary with a "status" key ("success" or "error") and a message describing the operation result.
 
     Example:
-        ```python
-        add_recipe_endpoint({
-            "name": "Pancakes",
-            "steps": "Mix ingredients and fry until golden.",
-            "ingredients": [
-                {"name": "Flour", "quantity": 200, "unit": "Grm"},
-                {"name": "Milk", "quantity": 250, "unit": "Mls"}
-            ]
-        })
-        ```
+
+    add_recipe_endpoint({
+        "name": "Pancakes",
+        "steps": "Mix ingredients and fry until golden.",
+        "ingredients": [
+            {"name": "Flour", "quantity": 200, "unit": "Grm"},
+            {"name": "Milk", "quantity": 250, "unit": "Mls"}
+        ]
+    })
     """
     cleaning_map = {
         "name": normalize_string,
@@ -105,14 +102,14 @@ def add_recipe_endpoint(update_data: RecipeSchema):
 @router.get("/{name}")
 def get_recipe_endpoint(name: str):
     """
-    Retrieve a specific recipe and its ingredients by name.
+    Retrieve a specific recipe and its ingredient details by name.
 
     Args:
-        name (str): The recipe name to search for.
+        name (str): The name of the recipe to fetch.
 
     Returns:
-        dict: Full recipe details with ingredients list, or an error message
-        if the recipe does not exist.
+        A dictionary containing the recipe’s name, preparation steps, and a list of ingredients,
+        or an error message if the recipe does not exist.
 
     Example:
         ```python
@@ -125,14 +122,14 @@ def get_recipe_endpoint(name: str):
 @router.delete("/", status_code=200)
 def delete_recipe_endpoint(recipe_data: dict = Body(...)):
     """
-    Delete a recipe by its name.
+    Delete a recipe record from the database by name.
 
     Args:
-        recipe_data (dict): Must include:
-            - `name` (str): The recipe name to delete.
+        recipe_data (dict): Must contain:
+            name (str): The recipe’s name to delete.
 
     Returns:
-        dict: A message indicating whether the deletion succeeded or failed.
+        A dictionary confirming the deletion or indicating that the recipe was not found.
 
     Example:
         ```python
@@ -146,16 +143,16 @@ def delete_recipe_endpoint(recipe_data: dict = Body(...)):
 @router.delete("/ingredient", status_code=200)
 def delete_ingredient_from_recipe_endpoint(recipe_data: dict = Body(...)):
     """
-    Remove a specific ingredient from a recipe.
+    Remove a specific ingredient from a given recipe.
 
     Args:
-        recipe_data (dict): Must include:
-            - `name` (str): Recipe name.
-            - `ingredient` (str): Ingredient name to remove.
+        recipe_data (dict): Must contain:
+            name (str): The name of the recipe.
+            ingredient (str): The ingredient to remove.
 
     Returns:
-        dict: Updated recipe data without the deleted ingredient,
-        or an error if not found.
+        A dictionary with the updated recipe data excluding the removed ingredient,
+        or an error message if the ingredient or recipe could not be found.
 
     Example:
         ```python
@@ -175,7 +172,7 @@ def delete_ingredient_from_recipe_endpoint(recipe_data: dict = Body(...)):
 @router.put("/name", status_code=200)
 def update_recipe_name_endpoint(recipe_data: dict = Body(...)):
     """
-    Update a recipe’s name in the database.
+    Update the name of an existing recipe.
 
     Args:
         recipe_data (dict): Must include:
@@ -183,7 +180,7 @@ def update_recipe_name_endpoint(recipe_data: dict = Body(...)):
             - `new_name` (str): New name to assign.
 
     Returns:
-        dict: A status message showing the old and new names.
+        A dictionary confirming the update or an error if the recipe was not found.
 
     Example:
         ```python
@@ -203,7 +200,7 @@ def update_recipe_name_endpoint(recipe_data: dict = Body(...)):
 @router.put("/ingredient", status_code=200)
 def update_recipe_ingredient_endpoint(recipe_data: dict = Body(...)):
     """
-    Replace an ingredient in a recipe with another ingredient.
+    Replace one ingredient in a recipe with another.
 
     Args:
         recipe_data (dict): Must include:
@@ -212,7 +209,7 @@ def update_recipe_ingredient_endpoint(recipe_data: dict = Body(...)):
             - `new_ingredient` (str): New ingredient name.
 
     Returns:
-        dict: Confirmation message or error if ingredient not found.
+        A status message indicating whether the ingredient was successfully updated or not found.
 
     Example:
         ```python
@@ -234,7 +231,7 @@ def update_recipe_ingredient_endpoint(recipe_data: dict = Body(...)):
 @router.put("/quantity", status_code=200)
 def update_recipe_quantity_endpoint(recipe_data: dict = Body(...)):
     """
-    Update the quantity of a specific ingredient in a recipe.
+    Update the quantity of an ingredient in a recipe.
 
     Args:
         recipe_data (dict): Must include:
@@ -243,7 +240,7 @@ def update_recipe_quantity_endpoint(recipe_data: dict = Body(...)):
             - `new_quantity` (float): Updated quantity value.
 
     Returns:
-        dict: A success or error message.
+        A dictionary with success or error status and updated quantity details.
 
     Example:
         ```python

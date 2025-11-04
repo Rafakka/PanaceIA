@@ -1,3 +1,16 @@
+"""
+recipes_manager.py
+
+Handles all CRUD operations and logic related to recipes and their ingredients.
+Each function here communicates directly with the database through SQLAlchemy ORM
+and uses the data_cleaner module for safe input normalization.
+
+All functions return structured dictionaries that can be serialized to JSON
+and consumed directly by FastAPI routes.
+
+Author: Rafael Kaher
+"""
+
 from app.core.db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
 from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 
@@ -5,29 +18,32 @@ from app.core.data_cleaner import normalize_string, normalize_quantity, normaliz
 def add_recipe(recipe_data: dict):
 
     """
-        Add a new recipe to the database.
+    Add a new recipe to the database.
 
-        Args:
-            recipe_data (dict): A dictionary containing:
-                - `name` (str): Recipe name.
-                - `steps` (str): Instructions for preparation.
-                - `ingredients` (list[dict]): Each dict has
-                `name`, `quantity`, and `unit`.
+    Args:
+        recipe_data (dict): A dictionary containing:
+            - name (str): Recipe name.
+            - steps (str): Preparation instructions.
+            - ingredients (list[dict]): Each ingredient dict must include:
+                - name (str): Ingredient name.
+                - quantity (float): Amount used.
+                - unit (str): Unit of measure.
 
-        Returns:
-            data (dict): A message indicating whether the recipe was created successfully.
+    Returns:
+        dict: A status message indicating success or failure.
 
-        Example:
-            ```python
-            add_recipe({
-                "name": "Pancakes",
-                "steps": "Mix and fry",
-                "ingredients": [
-                    {"name": "Flour", "quantity": 200, "unit": "Grm"}
-                ]
-            })
-            ```
+    Example:
+        ```python
+        add_recipe({
+            "name": "Pancakes",
+            "steps": "Mix ingredients and fry until golden.",
+            "ingredients": [
+                {"name": "Flour", "quantity": 200, "unit": "Grm"}
+            ]
+        })
+        ```
     """
+
     session = SessionLocal()
 
     recipe_clean_map = {
@@ -77,20 +93,19 @@ def add_recipe(recipe_data: dict):
 def list_recipes():
 
     """
-    List all recipes inserted in the database.
+    Retrieve all recipes from the database.
 
     Returns:
-    Data (dict): Returns a list of recipes of name and steps with ingredients list.
-
-    Args:
-        name (str): Return name of recipes:
-        steps (str): Return steps of recipes:
-        ingredients (dict) : Return a list of ingredients.
-        `name`,`steps`,`ingredients`
+        dict: Contains:
+            - status (str): "success" or "error".
+            - data (list[dict]): Each recipe includes:
+                - name (str)
+                - steps (str)
 
     Example:
         ```python
-            list_recipes()
+        list_recipes()
+        # -> {"status": "success", "data": [{"name": "Pancakes", "steps": "Mix and fry"}]}
         ```
     """
     
@@ -104,19 +119,28 @@ def list_recipes():
 def get_recipe_by_name(name: str):
 
     """
-        Get a new recipe by name from the database.
+    Retrieve a recipe and its ingredients by name.
 
-        Args: 
-            name (str): Recipe's name
+    Args:
+        name (str): Recipe name.
 
-        Returns:
-            Data (dict): Returns a dict message indicating whether the recipe was created successfully, or not plus data containing name, steps and a list of ingredients of the said recipe.
+    Returns:
+        dict: Contains:
+            - status (str): "success" or "error".
+            - data (dict, optional): Includes:
+                - name (str)
+                - steps (str)
+                - ingredients (list[dict]): Each has:
+                    - name (str)
+                    - quantity (float)
+                    - unit (str)
 
-        Example:
-            ```python
-            get_recipe_by_name(name)
-            ```
+    Example:
+        ```python
+        get_recipe_by_name("Pancakes")
+        ```
     """
+
     session = SessionLocal()
 
     clean_name = normalize_string(name)
@@ -135,24 +159,20 @@ def get_recipe_by_name(name: str):
 
 
 def remove_recipe(recipe_data: dict):
-
     """
-        Remove a recipe from the database.
+    Delete a recipe from the database.
 
-        Args:
-            recipe_data (dict): A dictionary containing:
-                - `name` (str): Recipe name.
-                `name`
+    Args:
+        recipe_data (dict): Must include:
+            - name (str): The recipe name to remove.
 
-        Returns:
-            Data (dict): Returns a message indicating whether the recipe was removed successfully.
-        
-        Example:
-            ```python
-            remove_recipe({
-                "name": "Pancakes"
-            })
-            ```
+    Returns:
+        dict: A message indicating success or failure.
+
+    Example:
+        ```python
+        remove_recipe({"name": "Pancakes"})
+        ```
     """
 
     session = SessionLocal()
@@ -173,24 +193,23 @@ def remove_recipe(recipe_data: dict):
 def remove_ingredient_from_recipe(recipe_data: dict):
 
     """
-        Remove an ingredient from the recipe from the database.
+    Remove a specific ingredient from a recipe.
 
-        Args:
-            recipe_data (dict): A dictionary containing:
-                - `name` (str): Recipe name.
-                - `ingredient` (str): Ingredient name.
-                `name`, `ingredient`
+    Args:
+        recipe_data (dict): Must include:
+            - name (str): Recipe name.
+            - ingredient (str): Ingredient name to remove.
 
-        Returns:
-            Data (dict): Returns a message indicating whether the ingredient of a recipe was removed successfully.
+    Returns:
+        dict: Updated recipe data or an error message.
 
-        Example:
-            ```python
-            remove_ingredient_from_recipe({
-                "name": "Pancakes",
-                "ingredient" : "eggs"
-            })
-            ```
+    Example:
+        ```python
+        remove_ingredient_from_recipe({
+            "name": "Pancakes",
+            "ingredient": "Eggs"
+        })
+        ```
     """
 
     session = SessionLocal()
@@ -227,24 +246,23 @@ def remove_ingredient_from_recipe(recipe_data: dict):
 def update_recipe_name(recipe_data: dict):
 
     """
-        Update recipe's name from the database.
+    Update a recipe’s name in the database.
 
-        Args:
-            recipe_data (dict): A dictionary containing:
-                - `new_name` (str): Recipe's new name.
-                - `old_name` (str): Recipe's old name.
-                `new_name`,`old_name`
+    Args:
+        recipe_data (dict): Must include:
+            - old_name (str): Current recipe name.
+            - new_name (str): New name to assign.
 
-        Returns:
-            Data (dict): Returns a message indicating whether the recipe was updated successfully.
-        
-        Example:
-            ```python
-            update_recipe_name({
-                "new_name": "Pancakes",
-                "old_name": "Light Pancakes"
-            })
-            ```
+    Returns:
+        dict: A message indicating whether the update succeeded.
+
+    Example:
+        ```python
+        update_recipe_name({
+            "old_name": "Pancakes",
+            "new_name": "Fluffy Pancakes"
+        })
+        ```
     """
 
     session = SessionLocal()
@@ -268,6 +286,29 @@ def update_recipe_name(recipe_data: dict):
     return {"status": "success", "updated": old_name, "new_name": new_name}
 
 def update_recipe_ingredient_name(recipe_data: dict):
+
+    """
+    Update the name of an ingredient inside a recipe.
+
+    Args:
+        recipe_data (dict): Must include:
+            - recipe_name (str): Recipe name.
+            - old_ingredient (str): Ingredient to rename.
+            - new_ingredient (str): New ingredient name.
+
+    Returns:
+        dict: Success message or error if ingredient not found.
+
+    Example:
+        ```python
+        update_recipe_ingredient_name({
+            "recipe_name": "Homemade Pasta",
+            "old_ingredient": "Brown Flour",
+            "new_ingredient": "Flour"
+        })
+        ```
+    """
+
     session = SessionLocal()
 
     recipe_clean_map = {
@@ -302,6 +343,29 @@ def update_recipe_ingredient_name(recipe_data: dict):
     return {"status": "error", "message": f"Ingredient '{old_ingredient}' not found in '{recipe_name}'."}
 
 def update_recipe_quantity(recipe_data: dict):
+
+    """
+    Update the quantity of a specific ingredient in a recipe.
+
+    Args:
+        recipe_data (dict): Must include:
+            - recipe_name (str): Target recipe name.
+            - ingredient (str): Ingredient to modify.
+            - new_quantity (float): Updated quantity value.
+
+    Returns:
+        dict: Confirmation message or error message.
+
+    Example:
+        ```python
+        update_recipe_quantity({
+            "recipe_name": "Pancakes",
+            "ingredient": "Flour",
+            "new_quantity": 250
+        })
+        ```
+    """
+
     session = SessionLocal()
 
     recipe_clean_map = {

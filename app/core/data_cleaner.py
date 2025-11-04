@@ -36,7 +36,8 @@ def normalize_unit(value: str) -> str:
         "kilos":"Kgs",
         "kilo":"Kg",
         "quilo":"Kg",
-        "quilos":"Kgs"
+        "quilos":"Kgs",
+        "unit":"Unit"
     }
 
     v= value.strip().lower()

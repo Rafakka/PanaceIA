@@ -1,3 +1,13 @@
+"""
+routes_ingredients.py
+
+Handles all CRUD operations and logic related to ingredients.
+Each function here uses the data_cleaner module for safe input normalization.
+
+Author: Rafael Kaher
+"""
+
+
 from fastapi import APIRouter, Body
 from app.core.modules.ingredients.ingredients_manager import (
     add_ingredient,
@@ -14,6 +24,27 @@ router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 @router.post("/", status_code=201)
 def add_ingredient_endpoint(update_data: IngredientSchema):
+    """
+    Add an ingredient to the data base.
+    
+    Args:
+        recipe_data (dict): A dictionary containing:
+                - name (str): Ingredient's name.
+                - unit (str): Measurement's unit.
+                - quantity (float): Ingredient's numerical quantity.
+
+    Returns:
+        dict: A status message indicating success or failure.
+    
+    Example:
+        ```python
+        add_ingredient_endpoint({
+            "name": "Eggs",
+            "unit": "Unit.",
+            "quantity":"2.0"
+        })
+        ```
+    """
     cleaning_map = {
         "name":normalize_string,
         "quantity":normalize_quantity,
@@ -24,6 +55,23 @@ def add_ingredient_endpoint(update_data: IngredientSchema):
 
 @router.get("/")
 def list_ingredients_endpoint():
+    """
+    Retrieve all ingredients from the database.
+
+    Returns:
+        dict: Contains:
+            - status (str): "success" or "error".
+            - data (list[dict]): Each recipe includes:
+                - name (str)
+                - quantity (float)
+                - unit (str)
+
+    Example:
+        ```python
+        list_recipes()
+        # -> {"status": "success", "data": [{"name": "Flour", "quantity": "100.0", "unit":"Mg"}]}
+        ```
+    """
     return list_ingredients()
 
 @router.get("/{name}")

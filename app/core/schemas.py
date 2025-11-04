@@ -64,6 +64,7 @@ class RecipeSchema(BaseModel):
     name: StrictStr
     steps: StrictStr
     ingredients: List[IngredientSchema]
+    spices: List[StrictStr] = []
 
 class UpdateIngredientNameSchema(BaseModel):
     """

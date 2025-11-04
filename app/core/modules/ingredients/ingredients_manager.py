@@ -12,8 +12,8 @@ Author: Rafael Kaher
 """
 
 
-from app.core.db_manager import SessionLocal, Ingredient
-from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit
+from app.core.db_manager import SessionLocal, Ingredient, RecipeIngredient
+from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 
 def add_ingredient(ingredient_data: dict):
     """

@@ -12,7 +12,7 @@ Author: Rafael Kaher
 """
 
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
 engine = create_engine("sqlite:///app/database/recipes.db", echo=True)
@@ -116,5 +116,37 @@ class Ingredient(Base):
         "RecipeIngredient",
         back_populates="ingredient"
     )
+
+class Spice(Base):
+    """
+    Represents a spice in the system.
+    Stored independently from ingredients to allow flexible linking and suggestions.
+    """
+    __tablename__ = "spices"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+    flavor_profile = Column(String, nullable=True)
+
+    recipe_links = relationship("RecipeSpice", back_populates="spice")
+
+
+class RecipeSpice(Base):
+    """
+    Association table linking recipes and spices.
+    Each record indicates that a recipe includes or was suggested a given spice.
+    """
+    __tablename__ = "recipe_spices"
+
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), primary_key=True)
+    spice_id = Column(Integer, ForeignKey("spices.id"), primary_key=True)
+
+    recipe = relationship("Recipe", back_populates="spice_links")
+    spice = relationship("Spice", back_populates="recipe_links")
+
+
+Recipe.spice_links = relationship(
+    "RecipeSpice", back_populates="recipe", cascade="all, delete-orphan"
+)
 
 Base.metadata.create_all(bind=engine)

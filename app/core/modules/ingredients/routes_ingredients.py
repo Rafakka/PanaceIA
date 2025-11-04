@@ -1,7 +1,7 @@
 """
 routes_ingredients.py
 
-Handles all CRUD operations and logic related to ingredients.
+Handles all CRUD endpoints and call the ingredients_manager.py to handle logic.
 Each function here uses the data_cleaner module for safe input normalization.
 
 Author: Rafael Kaher
@@ -68,7 +68,7 @@ def list_ingredients_endpoint():
 
     Example:
         ```python
-        list_recipes()
+        list_ingredients_endpoint()
         # -> {"status": "success", "data": [{"name": "Flour", "quantity": "100.0", "unit":"Mg"}]}
         ```
     """
@@ -113,7 +113,7 @@ def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
     
     Example:
         ```python
-        update_recipe_name({
+        update_ingredient_name_endpoint({
             "old_name": "Pancakes",
             "new_name": "Fluffy Pancakes"
         })
@@ -140,7 +140,7 @@ def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
     
     Example:
         ```python
-        update_recipe_name({
+        update_ingredient_quantity_endpoint({
             "name": "Rice",
             "new_quantity": "125.0"
         })

@@ -76,11 +76,49 @@ def list_ingredients_endpoint():
 
 @router.get("/{name}")
 def get_ingredient_endpoint(name: str):
+    """
+    Retrieve a ingredient by name.
+
+    Args:
+        name (str): Ingredient's name.
+
+    Returns:
+        dict: Contains:
+            - status (str): "success" or "error".
+            - ingredient (list[dict]):
+                - name (str)
+                - quantity (float)
+                - unit (str)
+
+    Example:
+        ```python
+        get_ingredient_endpoint("eggs")
+        ```
+    """
     clean_name = normalize_string(name)
     return get_ingredient_name(clean_name)
 
 @router.put("/name", status_code=200)
 def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
+    """
+    Updates a ingredient's name.
+    
+    Args:
+        recipe_data (dict): A dictionary containing:
+                - old_name (str): Ingredient's name.
+                - new_name (str): Measurement's unit.
+    
+    Returns:
+        dict: A message indicating whether the update succeeded.
+    
+    Example:
+        ```python
+        update_recipe_name({
+            "old_name": "Pancakes",
+            "new_name": "Fluffy Pancakes"
+        })
+        ```
+    """
     cleaning_map = {
         "old_name": normalize_string,
         "new_name": normalize_string
@@ -90,6 +128,24 @@ def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
 
 @router.put("/quantity", status_code=200)
 def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
+    """
+    Updates a ingredient's quantity.
+    
+    Args:
+        recipe_data (dict): A dictionary containing:
+                - name(str) : Ingredient's name.
+                - new_quantity (float): Decimal number of quantity.
+    Returns:
+        dict: A message indicating whether the update succeeded, with old ingredient's name and new ingredient's name.
+    
+    Example:
+        ```python
+        update_recipe_name({
+            "name": "Rice",
+            "new_quantity": "125.0"
+        })
+        ```
+    """
     cleaning_map = {
         "name": normalize_string,
         "new_quantity": normalize_quantity
@@ -99,6 +155,25 @@ def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
 
 @router.put("/unit", status_code=200)
 def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
+    """
+    Change ingredients unit's measure.
+    
+    Args:
+        update_data (dict): a dictionary containing:
+            - name (str) : Ingredient's name.
+            - new_unit (str) : New's unit measure.
+    
+    Returns:
+        dict: A message indicating whether the update succeeded, with old ingredient's name and new ingredient's unit.
+    
+    Example:
+        ```python
+        update_ingredients_unit_endpoint({
+            "name": "eggs",
+            "new_unit: "grams"
+        })
+        ```
+    """
     cleaning_map = {
         "name" : normalize_string,
         "new_unit": normalize_string
@@ -108,6 +183,20 @@ def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
 
 @router.delete("/", status_code=200)
 def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
+    """
+    Deletes an ingredient from database.
+    
+    Args:
+        name (str): Ingredient's name.
+    
+    Returns:
+        dict: A message of sucess or fail, with the name of the deleted ingredient.
+    
+    Example:
+        ```python
+        delete_ingredient_enpoint(eggs)
+        ```
+    """
     cleaning_map = {
         "name": normalize_string
     }

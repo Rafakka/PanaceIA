@@ -1,4 +1,8 @@
-# 🧠 PanaceIA — Intelligent Recipe Management System
+<p align="center">
+<img width="500" height="500" alt="paneacia_gitpage" src="https://github.com/user-attachments/assets/a11caa97-5166-4440-b1a6-a31d0dfe8670" />
+</p>
+
+🧠 PanaceIA — Intelligent Recipe Management System
 
 **PanaceIA** is a modular, intelligent recipe management app that learns user preferences and adapts its suggestions over time.  
 Built with **FastAPI**, **SQLAlchemy**, and **Pydantic**, it offers a clean data pipeline, strict validation, and a future-ready foundation for AI-driven recipe recommendations.

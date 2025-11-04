@@ -1,3 +1,17 @@
+"""
+db_manager.py
+
+Defines the SQLAlchemy ORM models and database engine configuration
+used across the system.
+
+This module establishes the relational structure between recipes and ingredients,
+providing persistent storage and standardized access to the database layer.
+
+Author: Rafael Kaher
+
+"""
+
+
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
@@ -6,6 +20,27 @@ Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
 
 class RecipeIngredient(Base):
+
+    """
+    Represents the association table linking recipes and ingredients.
+    Each record defines the quantity of a specific ingredient used in a recipe.
+
+    Args:
+        recipe_id (int): Foreign key referencing the recipe.
+        ingredient_id (int): Foreign key referencing the ingredient.
+        quantity (float): The amount of the ingredient used in the recipe.
+
+    Relationships:
+        recipe: Bidirectional link to the parent Recipe object.
+        ingredient: Bidirectional link to the associated Ingredient object.
+
+    Example:
+        ```python
+        link = RecipeIngredient(recipe_id=1, ingredient_id=2, quantity=250.0)
+        session.add(link)
+        ```
+    """
+
     __tablename__ = "recipe_ingredients"
 
     recipe_id = Column(Integer, ForeignKey("recipes.id"), primary_key=True)
@@ -16,6 +51,25 @@ class RecipeIngredient(Base):
     ingredient = relationship("Ingredient", back_populates="ingredient_recipes")
 
 class Recipe(Base):
+    """
+    Represents a recipe entity in the system.
+    Each recipe has a unique name, preparation steps,
+    and one or more linked ingredients through the RecipeIngredient relationship.
+    
+    Args:
+        id (int): Primary key identifier.
+        name (str): Recipe name, must be unique.
+        steps (str): Instructions for preparation.
+
+    Relationships:
+        recipe_ingredients: A list of RecipeIngredient objects linked to this recipe.
+
+    Example:
+        ```python
+        new_recipe = Recipe(name="Pancakes", steps="Mix and fry until golden.")
+        session.add(new_recipe)
+        ```
+    """
     __tablename__ = "recipes"
 
     id = Column(Integer, primary_key=True)
@@ -29,6 +83,29 @@ class Recipe(Base):
     )
 
 class Ingredient(Base):
+    """
+    Represents an ingredient entity in the database.
+    Each ingredient can be associated with one or more recipes.
+
+    Attributes:
+
+        id (int): Primary key identifier.
+        name (str): Ingredient name, must be unique.
+        unit (str): Measurement unit, such as "Grm" or "Mls".
+
+    Relationships:
+
+        ingredient_recipes: A list of RecipeIngredient objects linking this ingredient to recipes.
+
+    Example:
+        ```python
+        new_ingredient = Ingredient(name="Flour", unit="Grm")
+        session.add(new_ingredient)
+        ```
+    """
+
+    new_ingredient = Ingredient(name="Flour", unit="Grm")
+    session.add(new_ingredient)
     __tablename__ = "ingredients"
 
     id = Column(Integer, primary_key=True)

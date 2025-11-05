@@ -53,16 +53,11 @@ def add_ingredient(ingredient_data: dict):
 
 
     ingredient = session.query(Ingredient).filter_by(name=name).first()
+    
     if not ingredient:
         ingredient = Ingredient(name=name, unit=unit)
         session.add(ingredient)
-
-        link = RecipeIngredient(
-        recipe=recipe,
-        ingredient=ingredient,
-        quantity=data["quantity"]
-        )
-        session.commit(link)
+        session.commit()
         session.close()
         return {"status": "success", "name": name}
 

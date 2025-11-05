@@ -10,6 +10,7 @@ from app.core.modules.spices.spices_manager import (
     link_spice_to_recipe,
     unlink_spice_from_recipe
 )
+from app.core.modules.spices.spices_manager import update_spice
 
 router = APIRouter(prefix="/spices", tags=["spices"])
 

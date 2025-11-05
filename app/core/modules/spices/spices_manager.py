@@ -44,7 +44,7 @@ def suggest_spices_for_recipe(recipe_name: str):
     return {"status": "success", "suggestions": matches}
 
 
-def add_spice(spice_name: str, flavor_profile: str = None):
+def add_spice(spice_data: dict):
     """
         Add a spice with extended attributes:
         - flavor_profile: short text describing its taste

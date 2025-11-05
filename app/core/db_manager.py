@@ -114,24 +114,6 @@ class Ingredient(Base):
         back_populates="ingredient"
     )
 
-class Spice(Base):
-    """
-    Represents a spice in the system.
-    Stored independently from ingredients to allow flexible linking and suggestions.
-    """
-
-    id = Column(Integer, primary_key=True)
-    name = Column(String, unique=True, nullable=False)
-    flavor_profile = Column(String, nullable=True)
-    cuisine = Column(String, nullable=True)
-    recommended_quantity = Column(String, nullable=True)
-    health_benefits = Column(String, nullable=True)
-
-    pairs_with_ingredients = Column(String, nullable=True)
-    pairs_with_recipes = Column(String, nullable=True)
-
-    recipe_links = relationship("RecipeSpice", back_populates="spice")
-
 class RecipeSpice(Base):
     """
     Association table linking recipes and spices.

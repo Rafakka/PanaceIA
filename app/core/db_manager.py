@@ -15,7 +15,7 @@ Author: Rafael Kaher
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 
-engine = create_engine("sqlite:///app/database/recipes.db", echo=True)
+engine = create_engine("sqlite:///app/database/recipes.db", echo=False)
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
 

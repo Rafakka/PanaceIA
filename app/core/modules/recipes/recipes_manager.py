@@ -14,6 +14,7 @@ Author: Rafael Kaher
 from app.core.db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
 from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 from app.core.modules.spices.spices_manager import link_spice_to_recipe
+from app.core.modules.spices.spices_manager import auto_learn_from_recipe
 
 def add_recipe(recipe_data: dict):
 
@@ -90,9 +91,9 @@ def add_recipe(recipe_data: dict):
         try:
             from app.core.modules.spices.spices_manager import link_spice_to_recipe
             link_spice_to_recipe(recipe.name, spice)
+            auto_learn_from_recipe(recipe.name)
         except Exception as e:
             print(f"⚠️ Warning: could not link spice '{spice}' → {e}")
-
     session.close()
     return {"status": "success", "message": f"Recipe '{name}' created successfully."}
 

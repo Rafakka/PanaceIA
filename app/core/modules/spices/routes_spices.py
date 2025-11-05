@@ -1,5 +1,5 @@
 """
-routes_spices.py — Persistent Version
+routes_spices.py
 """
 
 from fastapi import APIRouter, Body
@@ -33,7 +33,13 @@ def link_spice(data: dict = Body(...)):
     """Link an existing spice to a recipe."""
     return link_spice_to_recipe(data["recipe_name"], data["spice_name"])
 
+@router.put("/", status_code=200)
+def update_spice_endpoint(data: dict = Body(...)):
+    """Update spice details (flavor, recommended quantity, or associations)."""
+    return update_spice(data)
+
 @router.delete("/unlink", status_code=200)
 def unlink_spice(data: dict = Body(...)):
     """Remove a spice from a recipe."""
     return unlink_spice_from_recipe(data["recipe_name"], data["spice_name"])
+

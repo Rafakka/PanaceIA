@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from app.core.db_manager import Base
 
 engine = create_engine("sqlite:///app/core/modules/spices/db/spices.db", echo=False)
-Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
 
 class Spice(Base):
@@ -14,5 +14,5 @@ class Spice(Base):
     recommended_quantity = Column(String)
     pairs_with_ingredients = Column(String)
     pairs_with_recipes = Column(String)
-
-Base.metadata.create_all(bind=engine)
+    
+    recipe_links = relationship("RecipeSpice", back_populates="spice")

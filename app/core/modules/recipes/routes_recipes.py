@@ -85,7 +85,7 @@ def add_recipe_endpoint(update_data: RecipeSchema):
         "name": normalize_string,
         "steps": normalize_string
     }
-    clean_recipe = apply_cleaning(update_data.dict(), cleaning_map)
+    clean_recipe = apply_cleaning(update_data.model_dump(), cleaning_map)
 
     cleaned_ingredients = []
     for ing in update_data.ingredients:
@@ -94,7 +94,7 @@ def add_recipe_endpoint(update_data: RecipeSchema):
             "quantity": normalize_quantity,
             "unit": normalize_unit
         }
-        cleaned_ingredients.append(apply_cleaning(ing.dict(), ing_clean_map))
+        cleaned_ingredients.append(apply_cleaning(ing.model_dump(), ing_clean_map))
 
     clean_recipe["ingredients"] = cleaned_ingredients
     return add_recipe(clean_recipe)

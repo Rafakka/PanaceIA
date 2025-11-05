@@ -50,7 +50,7 @@ def add_ingredient_endpoint(update_data: IngredientSchema):
         "quantity":normalize_quantity,
         "unit":normalize_unit
     }
-    clean_update = apply_cleaning(update_data.dict(), cleaning_map)
+    clean_update = apply_cleaning(update_data.model_dump(), cleaning_map)
     return add_ingredient(clean_update)
 
 @router.get("/")
@@ -123,7 +123,7 @@ def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
         "old_name": normalize_string,
         "new_name": normalize_string
     }
-    clean_update = apply_cleaning(update_data.dict(), cleaning_map)
+    clean_update = apply_cleaning(update_data.model_dump(), cleaning_map)
     return update_ingredient_name(clean_update)
 
 @router.put("/quantity", status_code=200)

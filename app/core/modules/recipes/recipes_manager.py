@@ -11,7 +11,8 @@ and consumed directly by FastAPI routes.
 Author: Rafael Kaher
 """
 
-from app.core.db_manager import SessionLocal, Recipe, Ingredient, RecipeIngredient
+from app.core import db_manager
+from app.core.db_manager import Recipe, Ingredient, RecipeIngredient
 from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
 from app.core.modules.spices.spices_manager import link_spice_to_recipe
 from app.core.modules.spices.spices_manager import auto_learn_from_recipe
@@ -45,7 +46,7 @@ def add_recipe(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     recipe_clean_map = {
         "name": normalize_string,
@@ -65,10 +66,10 @@ def add_recipe(recipe_data: dict):
         }) for ing in ingredient_data
     ]
 
-    existing_recipe = session.query(Recipe).filter_by(name=name).first()
-    if existing_recipe:
+    existing = session.query(Recipe).filter_by(name=name).one_or_none()
+    if existing:
         session.close()
-        return {"status": "error", "message": f"Recipe '{name}' already in DB."}
+        return {"status": "error", "message": f"Recipe name '{name}' already exists."}
 
     recipe = Recipe(name=name, steps=steps)
     session.add(recipe)
@@ -78,12 +79,7 @@ def add_recipe(recipe_data: dict):
         if not ingredient:
             ingredient = Ingredient(name=data["name"], unit=data["unit"])
             session.add(ingredient)
-
-        link = RecipeIngredient(
-            recipe=recipe,
-            ingredient=ingredient,
-            quantity=data["quantity"]
-        )
+        link = RecipeIngredient(recipe=recipe, ingredient=ingredient, quantity=data.get("quantity", 0.0))
         session.add(link)
     session.commit()
 
@@ -117,7 +113,7 @@ def list_recipes():
         ```
     """
     
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
     recipes = session.query(Recipe).all()
     result = [{"name": r.name, "steps": r.steps} for r in recipes]
     session.close()
@@ -149,7 +145,7 @@ def get_recipe_by_name(name: str):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     clean_name = normalize_string(name)
     recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
@@ -183,7 +179,7 @@ def remove_recipe(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
     raw_recipe_name = recipe_data.get("name")
     recipe_name = normalize_string(raw_recipe_name)
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
@@ -220,7 +216,7 @@ def remove_ingredient_from_recipe(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     raw_recipe_name = recipe_data.get("name")
     raw_ingredient_name = recipe_data.get("ingredient")
@@ -273,7 +269,7 @@ def update_recipe_name(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     recipe_clean_map = {
         "old_name": normalize_string,
@@ -317,7 +313,7 @@ def update_recipe_ingredient_name(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     recipe_clean_map = {
         "old_ingredient": normalize_string,
@@ -374,7 +370,7 @@ def update_recipe_quantity(recipe_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     recipe_clean_map = {
         "recipe_name": normalize_string,

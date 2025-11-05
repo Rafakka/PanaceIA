@@ -186,13 +186,16 @@ def validate_and_clean_ingredient(raw_data: dict):
         # Returns: {"status": "success", "data": {"name": "Milk", "quantity": 250.0, "unit": "Ml"}}
         ```
     """
+    normalized = apply_cleaning(
+        raw_data,
+        {"name": normalize_string, "quantity": normalize_quantity, "unit": normalize_unit}
+    )
     try:
-        valid = IngredientSchema(**raw_data)
+        valid = IngredientSchema(**normalized)
     except ValidationError as e:
         return {"status": "error", "message": e.errors()}
 
-    clean_data = clean_ingredient(valid.dict())
-    return {"status": "success", "data": clean_data}
+    return {"status": "success", "data": normalized}
 
 def validate_and_clean_recipe(raw_data: dict):
     """
@@ -220,10 +223,9 @@ def validate_and_clean_recipe(raw_data: dict):
         # Returns: {"status": "success", "data": { ... cleaned recipe ... }}
         ```
     """
+    normalized = clean_recipe(raw_data)
     try:
-        valid = RecipeSchema(**raw_data)
+        valid = RecipeSchema(**normalized)
     except ValidationError as e:
         return {"status": "error", "message": e.errors()}
-
-    clean_data = clean_recipe(valid.dict())
-    return {"status": "success", "data": clean_data}
+    return {"status": "success", "data": clean_recipe(valid.model_dump())}

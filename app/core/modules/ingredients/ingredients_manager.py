@@ -11,9 +11,9 @@ and consumed directly by FastAPI routes.
 Author: Rafael Kaher
 """
 
-
-from app.core.db_manager import SessionLocal, Ingredient, RecipeIngredient
 from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core import db_manager
+from app.core.db_manager import Ingredient, RecipeIngredient
 
 def add_ingredient(ingredient_data: dict):
     """
@@ -37,32 +37,30 @@ def add_ingredient(ingredient_data: dict):
         })
         ```
     """
-    session = SessionLocal()
-
+    session = db_manager.SessionLocal()
     ingredient_clean_map = {
         "name": normalize_string,
-        "quantity": normalize_quantity,
-        "unit":normalize_unit
+        "unit": normalize_unit
     }
-
     clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
-
     name = clean_ingredient["name"]
-    quantity = clean_ingredient["quantity"]
     unit = clean_ingredient["unit"]
 
+    existing = session.query(Ingredient).filter_by(name=name).first()
+    if existing:
+        session.close()
+        return {"status": "error", "message": f"Ingredient '{name}' already exists."}
 
-    ingredient = session.query(Ingredient).filter_by(name=name).first()
-    
-    if not ingredient:
+    try:
         ingredient = Ingredient(name=name, unit=unit)
         session.add(ingredient)
         session.commit()
         session.close()
-        return {"status": "success", "name": name}
-
-    session.close()
-    return {"status": "error","message": f" Ingredient, '{name}' already in Database."}
+        return {"status": "success", "name": name, "unit": unit}
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return {"status": "error", "message": str(e)}
 
 def list_ingredients():
     """
@@ -82,10 +80,10 @@ def list_ingredients():
         # -> {"status": "success", "data": [{"name": "Flour", "quantity": "100.0", "unit":"Mg"}]}
         ```
     """
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
     ingredients = session.query(Ingredient).all()
     result = [
-        {"name": i.name, "quantity": i.quantity, "unit": i.unit}
+        {"name": i.name, "unit": i.unit}
         for i in ingredients
     ]
     session.close()
@@ -111,7 +109,7 @@ def get_ingredient_name(name: str):
         get_ingredient_name("eggs")
         ```
     """
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
     ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
     if not ingredient:
         session.close()
@@ -144,31 +142,36 @@ def update_ingredient_name(ingredient_data: dict):
         })
         ```
     """
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
+    
+    clean_data = apply_cleaning(
+        ingredient_data,
+        {"old_name": normalize_string, "new_name": normalize_string}
+    )
 
-    ingredient_clean_map = {
-        "old_name": normalize_string,
-        "new_name": normalize_string
-    }
+    old_name = clean_data["old_name"]
+    new_name = clean_data["new_name"]
 
-    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
-
-    old_name = clean_ingredient["old_name"]
-    new_name = clean_ingredient["new_name"]
+    existing = session.query(Ingredient).filter_by(name=new_name).first()
+    if existing:
+        session.close()
+        return {"status": "error", "message": f"Ingredient '{new_name}' already exists."}
 
     ingredient = session.query(Ingredient).filter_by(name=old_name).one_or_none()
     if not ingredient:
         session.close()
         return {"status": "error", "message": f"'{old_name}' not found."}
+
     ingredient.name = new_name
-    session.commit()
-    data = {
-        "name": ingredient.name,
-        "quantity": ingredient.quantity,
-        "unit": ingredient.unit
-    }
-    session.close()
-    return {"status": "success", "updated": old_name, "new_name": new_name}
+
+    try:
+        session.commit()
+        session.close()
+        return {"status": "success", "updated": old_name, "new_name": new_name}
+    except Exception as e:
+        session.rollback()
+        session.close()
+        return {"status": "error", "message": str(e)}
 
 
 def update_ingredient_quantity(ingredient_data: dict):
@@ -191,7 +194,7 @@ def update_ingredient_quantity(ingredient_data: dict):
         ```
     """
 
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     ingredient_clean_map = {
         "name": normalize_string,
@@ -232,7 +235,7 @@ def update_ingredient_unit(ingredient_data: dict):
         })
         ```
     """
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
 
     ingredient_clean_map = {
         "name": normalize_string,
@@ -245,7 +248,7 @@ def update_ingredient_unit(ingredient_data: dict):
     new_unit = clean_ingredient["new_unit"]
 
     name = ingredient_data.get("name")
-    new_quantity = ingredient_data.get("new_unit")
+    new_unit = ingredient_data.get("new_unit")
 
     ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
     if not ingredient:
@@ -272,7 +275,7 @@ def remove_ingredient(ingredient_data: dict):
         remove_ingredient(eggs)
         ```
     """
-    session = SessionLocal()
+    session = db_manager.SessionLocal()
     ingredient_clean_map = {
         "name": normalize_string
     }

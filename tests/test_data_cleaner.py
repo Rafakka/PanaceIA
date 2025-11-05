@@ -1,71 +1,41 @@
-
 from app.core.data_cleaner import (
-    normalize_string, normalize_quantity, normalize_unit,
-    validate_and_clean_ingredient, validate_and_clean_recipe
+    normalize_string,
+    normalize_quantity,
+    normalize_unit,
+    validate_and_clean_ingredient,
+    validate_and_clean_recipe
 )
-import json
 
+def test_normalize_string():
+    assert normalize_string("  PANcake  ") == "Pancake"
 
-def print_test(title: str, data):
-    print(f"\n🔹 {title}")
-    print(json.dumps(data, indent=2, ensure_ascii=False))
+def test_normalize_quantity():
+    assert normalize_quantity("25") == 25.0
+    assert normalize_quantity(None) is None
 
+def test_normalize_unit():
+    assert normalize_unit("gramas") == "Grm"
+    assert normalize_unit("unknownunit") == "unknownunit"
 
-def test_basic_normalizers():
-    print("🚀 Testing basic normalizers...")
+def test_validate_and_clean_ingredient():
+    raw = {"name": " milk ", "quantity": "250", "unit": "mls"}
+    result = validate_and_clean_ingredient(raw)
+    assert result["status"] == "success"
+    data = result["data"]
+    assert data["name"] == "Milk"
+    assert data["quantity"] == 250.0
+    assert data["unit"] == "Mls"
 
-    # String normalization
-    print_test("normalize_string()", {
-        "input": "  panCAKE mix  ",
-        "output": normalize_string("  panCAKE mix  ")
-    })
-
-    # Quantity normalization
-    print_test("normalize_quantity()", {
-        "input": "12.5",
-        "output": normalize_quantity("12.5")
-    })
-
-    # Unit normalization
-    print_test("normalize_unit()", {
-        "inputs": ["gramas", "kilos", "colher de sopa", "mls", "xicara"],
-        "outputs": [normalize_unit(u) for u in ["gramas", "kilos", "colher de sopa", "mls", "xicara"]]
-    })
-
-
-def test_ingredient_validation():
-    print("\n🧩 Testing ingredient validation...")
-
-    messy_ingredient = {
-        "name": "  flour  ",
-        "quantity": "  200 ",
-        "unit": "gramas"
-    }
-
-    result = validate_and_clean_ingredient(messy_ingredient)
-    print_test("validate_and_clean_ingredient()", result)
-
-
-def test_recipe_validation():
-    print("\n🍳 Testing recipe validation...")
-
-    messy_recipe = {
-        "name": "  PANCAKES  ",
-        "steps": "  mix ingredients and fry until golden ",
+def test_validate_and_clean_recipe():
+    raw = {
+        "name": "pancakes",
+        "steps": "mix and fry",
         "ingredients": [
-            {"name": "  flour ", "quantity": "200", "unit": "gramas"},
-            {"name": "  Milk", "quantity": " 250 ", "unit": "mls"},
-            {"name": " eGG ", "quantity": "2", "unit": "pcs"}
+            {"name": "flour", "quantity": "200", "unit": "gramas"},
+            {"name": "milk", "quantity": "250", "unit": "mls"}
         ]
     }
-
-    result = validate_and_clean_recipe(messy_recipe)
-    print_test("validate_and_clean_recipe()", result)
-
-
-if __name__ == "__main__":
-    print("🧠 Starting Data Cleaner Tests...")
-    test_basic_normalizers()
-    test_ingredient_validation()
-    test_recipe_validation()
-    print("\n✅ All cleaner tests executed.\n")
+    result = validate_and_clean_recipe(raw)
+    assert result["status"] == "success"
+    assert "data" in result
+    assert len(result["data"]["ingredients"]) == 2

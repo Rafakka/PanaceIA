@@ -132,4 +132,6 @@ Recipe.spice_links = relationship(
     "RecipeSpice", back_populates="recipe", cascade="all, delete-orphan"
 )
 
+from app.core.modules.spices.db.spices_models import Spice
+
 Base.metadata.create_all(bind=engine)

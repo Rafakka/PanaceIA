@@ -14,15 +14,17 @@ Author: Rafael Kaher
 from app.core.schemas import IngredientSchema, RecipeSchema
 from pydantic import ValidationError
 
-def normalize_string(value:str) ->str:
+def normalize_string(value:str | dict) ->str|dict:
     """
-    Normalize string values by trimming whitespace and applying title casing.
+    Normalize string or dict values by trimming whitespace and applying title casing.
 
     Args:
         value (str): The string to be normalized.
+        value (dict): The dict to be normalized.
 
     Returns:
         str: The cleaned string if valid, otherwise returns the original value.
+        dict: The cleaned dict if valid, otherwise returns none.
 
     Example:
         ```python
@@ -30,17 +32,25 @@ def normalize_string(value:str) ->str:
         # Returns: 'Pancake Mix'
         ```
     """
+    if isinstance(value, dict):
+        cleaned_dict = {
+            key.strip().title(): v.strip().title() if isinstance(v, str) else v
+            for key, v in value.items()
+        }
+        return cleaned_dict  
+
     return value.strip().title() if isinstance(value,str) else value
 
-def normalize_quantity(value) -> float:
+def normalize_quantity(value: float | dict) -> float|dict:
     """
     Convert quantity values to floats when possible.
 
     Args:
-        value (any): A numeric or string value representing quantity.
+        value (any): A numeric/tring or a dict value representing quantity.
 
     Returns:
-        float | None: The converted float value, or None if conversion fails.
+        dict | float | None: The converted float value, dict or None if conversion fails.
+        
 
     Example:
         ```python
@@ -48,21 +58,32 @@ def normalize_quantity(value) -> float:
         # Returns: 200.0
         ```
     """
+    if isinstance(value, dict):
+        cleaned_dict = {}
+        for key, v in value.items():
+            clean_key = key.strip().title() if isinstance(key, str) else key
+            try:
+                clean_value = float(v)
+            except (ValueError, TypeError):
+                clean_value = v
+            cleaned_dict[clean_key] = clean_value
+        return cleaned_dict
     try:
         return float(value)
     except (ValueError, TypeError):
         return None
 
-def normalize_unit(value: str) -> str:
+def normalize_unit(value: str | dict) -> str | dict:
     """
     Normalize units of measurement into standardized abbreviations.
 
     Args:
         value (str): A string representing a measurement unit.
+        value (dict): A dict with values representing a measurement unit.
 
     Returns:
         str: The standardized unit if found in the unit map, otherwise the input itself.
-
+        dict: The standardized unito if found in unit map, othewise the input itself.
     Example:
         ```python
         normalize_unit("gramas")
@@ -97,9 +118,22 @@ def normalize_unit(value: str) -> str:
         "quilos":"Kgs",
         "unit":"Unit"
     }
-
-    v= value.strip().lower()
-    return unit_map.get(v,v)
+    if isinstance(value, dict):
+        cleaned_dict = {}
+        for key, v in value.items():
+            clean_key = key.strip().title() if isinstance(key, str) else key
+            if isinstance(v, str):
+                raw_value = v.strip().lower()
+                clean_value = unit_map.get(raw_value, v.title())
+            else:
+                clean_value = v
+            cleaned_dict[clean_key] = clean_value
+        return cleaned_dict
+    try:
+        v = value.strip().lower()
+        return unit_map.get(v, value.title())
+    except (ValueError, TypeError):
+        return None
 
 def clean_recipe(data: dict) -> dict:
     """

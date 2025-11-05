@@ -27,7 +27,7 @@ def suggest_spices(recipe_name: str):
 @router.post("/", status_code=201)
 def add_new_spice(data: dict = Body(...)):
     """Add a new spice to the library."""
-    return add_spice(data["name"], data.get("flavor_profile"))
+    return add_spice(data)
 
 @router.post("/link", status_code=201)
 def link_spice(data: dict = Body(...)):

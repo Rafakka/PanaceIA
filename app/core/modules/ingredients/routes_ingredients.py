@@ -176,7 +176,7 @@ def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
     """
     cleaning_map = {
         "name" : normalize_string,
-        "new_unit": normalize_string
+        "new_unit": normalize_unit
     }
     clean_update = apply_cleaning(update_data, cleaning_map)
     return update_ingredient_unit(clean_update)

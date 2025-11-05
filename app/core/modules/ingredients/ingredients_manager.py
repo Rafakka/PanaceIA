@@ -52,7 +52,7 @@ def add_ingredient(ingredient_data: dict):
     unit = clean_ingredient["unit"]
 
 
-    ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
+    ingredient = session.query(Ingredient).filter_by(name=name).first()
     if not ingredient:
         ingredient = Ingredient(name=name, unit=unit)
         session.add(ingredient)

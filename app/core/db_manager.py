@@ -8,9 +8,7 @@ This module establishes the relational structure between recipes and ingredients
 providing persistent storage and standardized access to the database layer.
 
 Author: Rafael Kaher
-
 """
-
 
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship

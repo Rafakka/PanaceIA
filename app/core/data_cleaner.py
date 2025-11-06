@@ -131,7 +131,7 @@ def normalize_unit(value: str | dict) -> str | dict:
         return cleaned_dict
     try:
         v = value.strip().lower()
-        return unit_map.get(v, value.title())
+        return unit_map.get(v, value.strip())
     except (ValueError, TypeError):
         return None
 
@@ -263,3 +263,69 @@ def validate_and_clean_recipe(raw_data: dict):
     except ValidationError as e:
         return {"status": "error", "message": e.errors()}
     return {"status": "success", "data": clean_recipe(valid.model_dump())}
+
+def normalize_universal_input(value):
+    available_cleaners = {
+        fn.split("normalize_")[1]: func
+        for fn, func in globals().items()
+        if fn.startswith("normalize_") and callable(func)
+    }
+
+    approved_tokens = {"name", "quantity", "unit"}
+
+    token_aliases = {
+        "name": "string",
+        "quantity": "quantity",
+        "unit": "unit",
+        "steps":"string",
+        "ingredient":"string"
+    }
+
+    excluded_fields = {"username", "hostname", "email"}
+
+    if isinstance(value, dict):
+        clean_dict = {}
+
+        for key, v in value.items():
+            normalized_key = key.strip().lower() if isinstance(key, str) else key
+            cleaned = False
+
+            if normalized_key in excluded_fields:
+                clean_dict[key] = v
+                continue
+
+            for semantic_token, actual_token in token_aliases.items():
+                cleaner_func = available_cleaners.get(actual_token)
+
+                if not cleaner_func or semantic_token not in approved_tokens:
+                    continue
+
+                if (
+                    normalized_key == semantic_token
+                    or f"_{semantic_token}" in normalized_key
+                    or normalized_key.endswith(semantic_token)
+                ):
+                    try:
+                        clean_dict[key] = cleaner_func(v)
+                        cleaned = True
+                        break
+                    except Exception:
+                        clean_dict[key] = v
+                        cleaned = True
+                        break
+
+            if not cleaned:
+                clean_dict[key] = v
+
+        return clean_dict
+
+    
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.replace(".", "", 1).isdigit():
+            return normalize_quantity(stripped)
+        return normalize_string(value)
+    elif isinstance(value, (int, float)):
+        return normalize_quantity(value)
+    else:
+        return value

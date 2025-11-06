@@ -13,12 +13,11 @@ Author: Rafael Kaher
 
 from app.core import db_manager
 from app.core.db_manager import Recipe, Ingredient, RecipeIngredient
-from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core.data_cleaner import normalize_universal_input
 from app.core.modules.spices.spices_manager import link_spice_to_recipe
 from app.core.modules.spices.spices_manager import auto_learn_from_recipe
 
 def add_recipe(recipe_data: dict):
-
     """
     Add a new recipe to the database.
 
@@ -45,26 +44,19 @@ def add_recipe(recipe_data: dict):
         })
         ```
     """
-
     session = db_manager.SessionLocal()
 
-    recipe_clean_map = {
-        "name": normalize_string,
-        "steps": normalize_string
-    }
-    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+    clean_recipe = normalize_universal_input(recipe_data)
+    if "ingredients" in clean_recipe and isinstance(clean_recipe["ingredients"], list):
+        clean_recipe["ingredients"] = [
+            normalize_universal_input(ingredient)
+            for ingredient in clean_recipe["ingredients"]
+            if isinstance(ingredient, dict)
+        ]
 
     name = clean_recipe["name"]
     steps = clean_recipe["steps"]
-    ingredient_data = recipe_data["ingredients"]
-
-    cleaned_ingredients = [
-        apply_cleaning(ing, {
-            "name": normalize_string,
-            "quantity": normalize_quantity,
-            "unit": normalize_unit
-        }) for ing in ingredient_data
-    ]
+    ingredient_data = clean_recipe["ingredients"]
 
     existing = session.query(Recipe).filter_by(name=name).one_or_none()
     if existing:
@@ -74,13 +66,19 @@ def add_recipe(recipe_data: dict):
     recipe = Recipe(name=name, steps=steps)
     session.add(recipe)
 
-    for data in cleaned_ingredients:
+    for data in ingredient_data:
         ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
         if not ingredient:
             ingredient = Ingredient(name=data["name"], unit=data["unit"])
             session.add(ingredient)
-        link = RecipeIngredient(recipe=recipe, ingredient=ingredient, quantity=data.get("quantity", 0.0))
+
+        link = RecipeIngredient(
+            recipe=recipe,
+            ingredient=ingredient,
+            quantity=data.get("quantity", 0.0)
+        )
         session.add(link)
+
     session.commit()
 
     for spice in recipe_data.get("spices", []):
@@ -90,6 +88,7 @@ def add_recipe(recipe_data: dict):
             auto_learn_from_recipe(recipe.name)
         except Exception as e:
             print(f"⚠️ Warning: could not link spice '{spice}' → {e}")
+
     session.close()
     return {"status": "success", "message": f"Recipe '{name}' created successfully."}
 
@@ -147,7 +146,7 @@ def get_recipe_by_name(name: str):
 
     session = db_manager.SessionLocal()
 
-    clean_name = normalize_string(name)
+    clean_name = normalize_universal_input(name)
     recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
     if not recipe:
         session.close()
@@ -181,7 +180,7 @@ def remove_recipe(recipe_data: dict):
 
     session = db_manager.SessionLocal()
     raw_recipe_name = recipe_data.get("name")
-    recipe_name = normalize_string(raw_recipe_name)
+    recipe_name = normalize_universal_input(raw_recipe_name)
     target = session.query(Recipe).filter_by(name=recipe_name).one_or_none()
 
     if not target:
@@ -221,8 +220,8 @@ def remove_ingredient_from_recipe(recipe_data: dict):
     raw_recipe_name = recipe_data.get("name")
     raw_ingredient_name = recipe_data.get("ingredient")
 
-    cleaned_recipe_name = normalize_string(raw_recipe_name)
-    ingredient_name = normalize_string(raw_ingredient_name)
+    cleaned_recipe_name = normalize_universal_input(raw_recipe_name)
+    ingredient_name = normalize_universal_input(raw_ingredient_name)
 
     recipe = session.query(Recipe).filter_by(name=cleaned_recipe_name).one_or_none()
     if not recipe:
@@ -271,11 +270,7 @@ def update_recipe_name(recipe_data: dict):
 
     session = db_manager.SessionLocal()
 
-    recipe_clean_map = {
-        "old_name": normalize_string,
-        "new_name": normalize_string
-    }
-    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+    clean_recipe = normalize_universal_input(recipe_data)
 
     old_name = clean_recipe["old_name"]
     new_name = clean_recipe["new_name"]
@@ -315,12 +310,7 @@ def update_recipe_ingredient_name(recipe_data: dict):
 
     session = db_manager.SessionLocal()
 
-    recipe_clean_map = {
-        "old_ingredient": normalize_string,
-        "new_ingredient": normalize_string,
-        "recipe_name": normalize_string
-    }
-    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+    clean_recipe = normalize_universal_input(recipe_data)
 
     old_ingredient = clean_recipe["old_ingredient"]
     new_ingredient = clean_recipe["new_ingredient"]
@@ -372,12 +362,7 @@ def update_recipe_quantity(recipe_data: dict):
 
     session = db_manager.SessionLocal()
 
-    recipe_clean_map = {
-        "recipe_name": normalize_string,
-        "ingredient": normalize_string,
-        "new_quantity": normalize_quantity
-    }
-    clean_recipe = apply_cleaning(recipe_data, recipe_clean_map)
+    clean_recipe = normalize_universal_input(recipe_data)
 
     recipe_name = clean_recipe["recipe_name"]
     ingredient_name = clean_recipe["ingredient"]

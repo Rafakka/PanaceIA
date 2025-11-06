@@ -11,7 +11,7 @@ and consumed directly by FastAPI routes.
 Author: Rafael Kaher
 """
 
-from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core.data_cleaner import normalize_universal_input
 from app.core import db_manager
 from app.core.db_manager import Ingredient, RecipeIngredient
 
@@ -38,11 +38,8 @@ def add_ingredient(ingredient_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
-    ingredient_clean_map = {
-        "name": normalize_string,
-        "unit": normalize_unit
-    }
-    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
+
+    clean_ingredient = normalize_universal_input(ingredient_data)
     name = clean_ingredient["name"]
     unit = clean_ingredient["unit"]
 
@@ -89,36 +86,42 @@ def list_ingredients():
     session.close()
     return result
 
-def get_ingredient_name(name: str):
+def get_ingredient_name(value: str | dict) -> dict:
     """
-    Retrieve a ingredient by name.
+    Retrieve an ingredient by name.
 
     Args:
-        name (str): Ingredient's name.
+        value (str | dict): Ingredient name (e.g., "eggs") or dict containing {"name": "eggs"}.
 
     Returns:
         dict: Contains:
             - status (str): "success" or "error".
-            - ingredient (list[dict]):
-                - name (str)
-                - quantity (float)
-                - unit (str)
+            - data (dict): Ingredient details if found.
+            - message (str): Error message if not found.
 
     Example:
         ```python
         get_ingredient_name("eggs")
+        # -> {"status": "success", "data": {"name": "Eggs", "unit": "Unit"}}
         ```
     """
     session = db_manager.SessionLocal()
+
+    if isinstance(value, dict):
+        raw_name = value.get("name")
+    else:
+        raw_name = value
+
+    name = normalize_universal_input(raw_name)
+
     ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
+
     if not ingredient:
         session.close()
         return {"status": "error", "message": f"'{name}' not found."}
-    data = {
-        "name": ingredient.name,
-        "quantity": ingredient.quantity,
-        "unit": ingredient.unit
-    }
+
+    data = {"name": ingredient.name, "unit": ingredient.unit}
+
     session.close()
     return {"status": "success", "data": data}
 
@@ -144,11 +147,7 @@ def update_ingredient_name(ingredient_data: dict):
     """
     session = db_manager.SessionLocal()
     
-    clean_data = apply_cleaning(
-        ingredient_data,
-        {"old_name": normalize_string, "new_name": normalize_string}
-    )
-
+    clean_data = normalize_universal_input(ingredient_data)
     old_name = clean_data["old_name"]
     new_name = clean_data["new_name"]
 
@@ -196,12 +195,7 @@ def update_ingredient_quantity(ingredient_data: dict):
 
     session = db_manager.SessionLocal()
 
-    ingredient_clean_map = {
-        "name": normalize_string,
-        "new_quantity": normalize_quantity
-    }
-
-    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
+    clean_ingredient = normalize_universal_input(ingredient_data)
 
     name = clean_ingredient["name"]
     new_quantity = clean_ingredient["new_quantity"]
@@ -237,12 +231,7 @@ def update_ingredient_unit(ingredient_data: dict):
     """
     session = db_manager.SessionLocal()
 
-    ingredient_clean_map = {
-        "name": normalize_string,
-        "new_unit": normalize_unit
-    }
-
-    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
+    clean_ingredient = normalize_universal_input(ingredient_data)
 
     name = clean_ingredient["name"]
     new_unit = clean_ingredient["new_unit"]
@@ -276,10 +265,8 @@ def remove_ingredient(ingredient_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
-    ingredient_clean_map = {
-        "name": normalize_string
-    }
-    clean_ingredient = apply_cleaning(ingredient_data, ingredient_clean_map)
+
+    clean_ingredient = normalize_universal_input(ingredient_data)
     name = clean_ingredient["name"]
     ingredient = session.query(Ingredient).filter_by(name=name).one_or_none()
     if not ingredient:

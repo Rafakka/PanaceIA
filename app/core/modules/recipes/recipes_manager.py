@@ -46,6 +46,9 @@ def add_recipe(recipe_data: dict):
     """
     session = db_manager.SessionLocal()
 
+    if not isinstance(recipe_data, dict):
+        recipe_data = recipe_data.model_dump()
+
     clean_recipe = normalize_universal_input(recipe_data)
     if "ingredients" in clean_recipe and isinstance(clean_recipe["ingredients"], list):
         clean_recipe["ingredients"] = [

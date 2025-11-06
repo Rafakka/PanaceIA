@@ -146,6 +146,9 @@ def update_ingredient_name(ingredient_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
+
+    if not isinstance(ingredient_data, dict):
+        ingredient_data = ingredient_data.model_dump()
     
     clean_data = normalize_universal_input(ingredient_data)
     old_name = clean_data["old_name"]
@@ -195,6 +198,9 @@ def update_ingredient_quantity(ingredient_data: dict):
 
     session = db_manager.SessionLocal()
 
+    if not isinstance(ingredient_data, dict):
+        ingredient_data = ingredient_data.model_dump()
+
     clean_ingredient = normalize_universal_input(ingredient_data)
 
     name = clean_ingredient["name"]
@@ -230,6 +236,9 @@ def update_ingredient_unit(ingredient_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
+    
+    if not isinstance(ingredient_data, dict):
+        ingredient_data = ingredient_data.model_dump()
 
     clean_ingredient = normalize_universal_input(ingredient_data)
 
@@ -265,6 +274,9 @@ def remove_ingredient(ingredient_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
+    
+    if not isinstance(ingredient_data, dict):
+        ingredient_data = ingredient_data.model_dump()
 
     clean_ingredient = normalize_universal_input(ingredient_data)
     name = clean_ingredient["name"]

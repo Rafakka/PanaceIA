@@ -45,11 +45,11 @@ async def add_recipe_endpoint(request_data: dict):
         })
         ```
     """
-    return add_recipe(request_data)
+    return add_ingredient(request_data)
 
 @router.get("/")
 @normalize_input
-async def list_ingredients_endpoint(request_data:dict):
+async def list_ingredients_endpoint():
     """
     Retrieve all ingredients from the database.
 
@@ -67,7 +67,7 @@ async def list_ingredients_endpoint(request_data:dict):
         # -> {"status": "success", "data": [{"name": "Flour", "quantity": "100.0", "unit":"Mg"}]}
         ```
     """
-    return list_ingredients(request_data)
+    return list_ingredients()
 
 @router.get("/{name}")
 @normalize_input

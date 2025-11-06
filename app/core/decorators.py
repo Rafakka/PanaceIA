@@ -1,8 +1,6 @@
 from functools import wraps
 from app.core.data_cleaner import normalize_universal_input
-
-from functools import wraps
-from app.core.data_cleaner import normalize_universal_input
+import inspect
 
 def normalize_input(func):
     """Automatically normalize input dictionaries for FastAPI endpoints."""
@@ -17,6 +15,8 @@ def normalize_input(func):
                 k: normalize_universal_input(v) for k, v in kwargs.items()
             }
 
-        return await func(*args, **normalized_kwargs)
-
+        result = func(*args, **normalized_kwargs)
+        if inspect.iscoroutine(result):
+            return await result
+        return result
     return wrapper

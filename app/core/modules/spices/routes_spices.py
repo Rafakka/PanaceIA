@@ -23,7 +23,7 @@ def list_all_spices():
 
 @router.get("/suggest/{recipe_name}")
 @normalize_input
-def suggest_spices(recipe_name: SpiceSchema):
+def suggest_spices(recipe_name: str):
     """Suggest spices based on a recipe’s ingredients."""
     return suggest_spices_for_recipe(recipe_name)
 

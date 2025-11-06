@@ -11,8 +11,8 @@ Author: Rafael Kaher
 
 """
 
-from pydantic import BaseModel, StrictStr, StrictFloat
-from typing import List
+from pydantic import BaseModel, StrictStr, StrictFloat, Field
+from typing import List, Optional
 
 class IngredientSchema(BaseModel):
     """
@@ -100,7 +100,7 @@ class SpiceSchema(BaseModel):
     """
 
     name: StrictStr
-    flavor_profile: StrictStr | None = None
-    recommended_quantity: StrictStr | None = None
-    pairs_with_ingredients: List[StrictStr] = []
-    pairs_with_recipes: List[StrictStr] = []
+    flavor_profile: Optional[StrictStr] = None
+    recommended_quantity: Optional[StrictStr] = None
+    pairs_with_ingredients: List[StrictStr] = Field(default_factory=list)
+    pairs_with_recipes: List[StrictStr] = Field(default_factory=list)

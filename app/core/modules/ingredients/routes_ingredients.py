@@ -7,7 +7,7 @@ Each function here uses the data_cleaner module for safe input normalization.
 Author: Rafael Kaher
 """
 
-
+from app.core.decorators import normalize_input
 from fastapi import APIRouter, Body
 from app.core.modules.ingredients.ingredients_manager import (
     add_ingredient,
@@ -17,13 +17,13 @@ from app.core.modules.ingredients.ingredients_manager import (
     update_ingredient_quantity,
     remove_ingredient
 )
-from app.core.data_cleaner import normalize_string, normalize_quantity, apply_cleaning, normalize_unit
 from app.core.schemas import IngredientSchema, UpdateIngredientNameSchema
 
 router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 @router.post("/", status_code=201)
-def add_ingredient_endpoint(update_data: IngredientSchema):
+@normalize_input
+async def add_recipe_endpoint(request_data: dict):
     """
     Add an ingredient to the data base.
     
@@ -45,16 +45,11 @@ def add_ingredient_endpoint(update_data: IngredientSchema):
         })
         ```
     """
-    cleaning_map = {
-        "name":normalize_string,
-        "quantity":normalize_quantity,
-        "unit":normalize_unit
-    }
-    clean_update = apply_cleaning(update_data.model_dump(), cleaning_map)
-    return add_ingredient(clean_update)
+    return add_recipe(request_data)
 
 @router.get("/")
-def list_ingredients_endpoint():
+@normalize_input
+async def list_ingredients_endpoint(request_data:dict):
     """
     Retrieve all ingredients from the database.
 
@@ -72,9 +67,10 @@ def list_ingredients_endpoint():
         # -> {"status": "success", "data": [{"name": "Flour", "quantity": "100.0", "unit":"Mg"}]}
         ```
     """
-    return list_ingredients()
+    return list_ingredients(request_data)
 
 @router.get("/{name}")
+@normalize_input
 def get_ingredient_endpoint(name: str):
     """
     Retrieve a ingredient by name.
@@ -95,10 +91,10 @@ def get_ingredient_endpoint(name: str):
         get_ingredient_endpoint("eggs")
         ```
     """
-    clean_name = normalize_string(name)
-    return get_ingredient_name(clean_name)
+    return get_ingredient_name(name)
 
 @router.put("/name", status_code=200)
+@normalize_input
 def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
     """
     Updates a ingredient's name.
@@ -119,14 +115,10 @@ def update_ingredient_name_endpoint(update_data: UpdateIngredientNameSchema):
         })
         ```
     """
-    cleaning_map = {
-        "old_name": normalize_string,
-        "new_name": normalize_string
-    }
-    clean_update = apply_cleaning(update_data.model_dump(), cleaning_map)
-    return update_ingredient_name(clean_update)
+    return update_ingredient_name(update_data)
 
 @router.put("/quantity", status_code=200)
+@normalize_input
 def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
     """
     Updates a ingredient's quantity.
@@ -146,14 +138,10 @@ def update_ingredient_quantity_endpoint(update_data: dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "name": normalize_string,
-        "new_quantity": normalize_quantity
-    }
-    clean_update = apply_cleaning(update_data, cleaning_map)
-    return update_ingredient_quantity(clean_update)
+    return update_ingredient_quantity(updata_data)
 
 @router.put("/unit", status_code=200)
+@normalize_input
 def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
     """
     Change ingredients unit's measure.
@@ -174,14 +162,10 @@ def update_ingredient_unit_endpoint(update_data:dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "name" : normalize_string,
-        "new_unit": normalize_unit
-    }
-    clean_update = apply_cleaning(update_data, cleaning_map)
-    return update_ingredient_unit(clean_update)
+    return update_ingredient_unit(update_data)
 
 @router.delete("/", status_code=200)
+@normalize_input
 def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
     """
     Deletes an ingredient from database.
@@ -197,8 +181,4 @@ def delete_ingredient_endpoint(ingredient_data: dict = Body(...)):
         delete_ingredient_enpoint(eggs)
         ```
     """
-    cleaning_map = {
-        "name": normalize_string
-    }
-    clean_data = apply_cleaning(ingredient_data, cleaning_map)
-    return remove_ingredient(clean_data)
+    return remove_ingredient(ingredient_data)

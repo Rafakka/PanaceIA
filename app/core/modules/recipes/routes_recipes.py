@@ -24,7 +24,7 @@ from app.core.modules.recipes.recipes_manager import (
     update_recipe_ingredient_name,
     update_recipe_quantity
 )
-from app.core.data_cleaner import normalize_string, normalize_quantity, normalize_unit, apply_cleaning
+from app.core.decorators import normalize_input
 from app.core.schemas import RecipeSchema, IngredientSchema
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -52,6 +52,7 @@ def list_all_recipes_endpoint():
     return list_recipes()
 
 @router.post("/", status_code=201)
+@normalize_input
 def add_recipe_endpoint(update_data: RecipeSchema):
     """
     Create a new recipe record in the database.
@@ -81,25 +82,10 @@ def add_recipe_endpoint(update_data: RecipeSchema):
         ]
     })
     """
-    cleaning_map = {
-        "name": normalize_string,
-        "steps": normalize_string
-    }
-    clean_recipe = apply_cleaning(update_data.model_dump(), cleaning_map)
-
-    cleaned_ingredients = []
-    for ing in update_data.ingredients:
-        ing_clean_map = {
-            "name": normalize_string,
-            "quantity": normalize_quantity,
-            "unit": normalize_unit
-        }
-        cleaned_ingredients.append(apply_cleaning(ing.model_dump(), ing_clean_map))
-
-    clean_recipe["ingredients"] = cleaned_ingredients
-    return add_recipe(clean_recipe)
+    return add_recipe(update_data)
 
 @router.get("/{name}")
+@normalize_input
 def get_recipe_endpoint(name: str):
     """
     Retrieve a specific recipe and its ingredient details by name.
@@ -116,10 +102,10 @@ def get_recipe_endpoint(name: str):
         get_recipe_endpoint("Pancakes")
         ```
     """
-    clean_name = normalize_string(name)
-    return get_recipe_by_name(clean_name)
+    return get_recipe_by_name(name)
 
 @router.delete("/", status_code=200)
+@normalize_input
 def delete_recipe_endpoint(recipe_data: dict = Body(...)):
     """
     Delete a recipe record from the database by name.
@@ -136,11 +122,10 @@ def delete_recipe_endpoint(recipe_data: dict = Body(...)):
         delete_recipe_endpoint({"name": "Pancakes"})
         ```
     """
-    cleaning_map = {"name": normalize_string}
-    clean_data = apply_cleaning(recipe_data, cleaning_map)
-    return remove_recipe(clean_data)
+    return remove_recipe(recipe_data)
 
 @router.delete("/ingredient", status_code=200)
+@normalize_input
 def delete_ingredient_from_recipe_endpoint(recipe_data: dict = Body(...)):
     """
     Remove a specific ingredient from a given recipe.
@@ -162,14 +147,10 @@ def delete_ingredient_from_recipe_endpoint(recipe_data: dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "name": normalize_string,
-        "ingredient": normalize_string
-    }
-    clean_data = apply_cleaning(recipe_data, cleaning_map)
-    return remove_ingredient_from_recipe(clean_data)
+    return remove_ingredient_from_recipe(recipe_data)
 
 @router.put("/name", status_code=200)
+@normalize_input
 def update_recipe_name_endpoint(recipe_data: dict = Body(...)):
     """
     Update the name of an existing recipe.
@@ -190,14 +171,10 @@ def update_recipe_name_endpoint(recipe_data: dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "old_name": normalize_string,
-        "new_name": normalize_string
-    }
-    clean_data = apply_cleaning(recipe_data, cleaning_map)
-    return update_recipe_name(clean_data)
+    return update_recipe_name(recipe_data)
 
 @router.put("/ingredient", status_code=200)
+@normalize_input
 def update_recipe_ingredient_endpoint(recipe_data: dict = Body(...)):
     """
     Replace one ingredient in a recipe with another.
@@ -220,15 +197,10 @@ def update_recipe_ingredient_endpoint(recipe_data: dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "recipe_name": normalize_string,
-        "old_ingredient": normalize_string,
-        "new_ingredient": normalize_string
-    }
-    clean_data = apply_cleaning(recipe_data, cleaning_map)
-    return update_recipe_ingredient(clean_data)
+    return update_recipe_ingredient(recipe_data)
 
 @router.put("/quantity", status_code=200)
+@normalize_input
 def update_recipe_quantity_endpoint(recipe_data: dict = Body(...)):
     """
     Update the quantity of an ingredient in a recipe.
@@ -251,10 +223,4 @@ def update_recipe_quantity_endpoint(recipe_data: dict = Body(...)):
         })
         ```
     """
-    cleaning_map = {
-        "recipe_name": normalize_string,
-        "ingredient": normalize_string,
-        "new_quantity": normalize_quantity
-    }
-    clean_data = apply_cleaning(recipe_data, cleaning_map)
-    return update_recipe_quantity(clean_data)
+    return update_recipe_quantity(recipe_data)

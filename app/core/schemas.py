@@ -104,3 +104,7 @@ class SpiceSchema(BaseModel):
     recommended_quantity: Optional[StrictStr] = None
     pairs_with_ingredients: List[StrictStr] = Field(default_factory=list)
     pairs_with_recipes: List[StrictStr] = Field(default_factory=list)
+
+class LinkSpiceSchema(BaseModel):
+    spice_name: str
+    recipe_name: str

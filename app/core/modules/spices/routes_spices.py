@@ -12,7 +12,7 @@ from app.core.modules.spices.spices_manager import (
 )
 from app.core.modules.spices.spices_manager import update_spice
 from app.core.decorators import normalize_input
-from app.core.schemas import SpiceSchema
+from app.core.schemas import SpiceSchema, LinkSpiceSchema
 
 router = APIRouter(prefix="/spices", tags=["spices"])
 
@@ -35,9 +35,12 @@ def add_new_spice(data:SpiceSchema):
 
 @router.post("/link", status_code=201)
 @normalize_input
-def link_spice(data: SpiceSchema):
+def link_spice(data: LinkSpiceSchema):
     """Link an existing spice to a recipe."""
-    return link_spice_to_recipe(data["recipe_name"], data["spice_name"])
+    return link_spice_to_recipe(
+        data.spice_name,
+        data.recipe_name
+    )
 
 @router.put("/", status_code=200)
 @normalize_input
@@ -49,4 +52,7 @@ def update_spice_endpoint(data: SpiceSchema):
 @normalize_input
 def unlink_spice(data: SpiceSchema):
     """Remove a spice from a recipe."""
-    return unlink_spice_from_recipe(data["recipe_name"], data["spice_name"])
+    return unlink_spice_from_recipe(
+        data.spice_name,
+        data.recipe_name
+    )

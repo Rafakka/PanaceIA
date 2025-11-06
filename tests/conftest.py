@@ -19,7 +19,8 @@ from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core import db_manager
-
+from app.core.modules.spices.db.spices_models import Spice
+from app.core.db_manager import Base, engine
 
 # ---------------------------------------------------------------------------
 # 1. DATABASE FIXTURE — shared in-memory SQLite engine for tests
@@ -77,3 +78,9 @@ def test_client():
     with TestClient(app) as client:
         yield client
 
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_db():
+    """Ensure all tables (including spices) exist for tests."""
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)

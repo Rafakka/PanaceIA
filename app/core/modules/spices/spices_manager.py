@@ -18,31 +18,34 @@ def suggest_spices_for_recipe(recipe_name: str):
     """
     session = SessionLocal()
     clean_name = normalize_string(recipe_name)
-    recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
+    try:
 
-    if not recipe:
+        recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
+
+        if not recipe:
+            session.close()
+            return {"status": "error", "message": f"Recipe '{clean_name}' not found."}
+
+        recipe_ingredients = [ri.ingredient.name for ri in recipe.recipe_ingredients]
+        all_spices = session.query(Spice).all()
+
+        matches = []
+        for spice in all_spices:
+            pairs = spice.pairs_with_ingredients.split(",") if spice.pairs_with_ingredients else []
+            overlap = len(set(pairs) & set(recipe_ingredients))
+            if overlap > 0:
+                matches.append({
+                    "name": spice.name,
+                    "match_score": overlap,
+                    "flavor_profile": spice.flavor_profile,
+                    "recommended_quantity": spice.recommended_quantity
+                })
+
         session.close()
-        return {"status": "error", "message": f"Recipe '{clean_name}' not found."}
-
-    recipe_ingredients = [ri.ingredient.name for ri in recipe.recipe_ingredients]
-    all_spices = session.query(Spice).all()
-
-    matches = []
-    for spice in all_spices:
-        pairs = spice.pairs_with_ingredients.split(",") if spice.pairs_with_ingredients else []
-        overlap = len(set(pairs) & set(recipe_ingredients))
-        if overlap > 0:
-            matches.append({
-                "name": spice.name,
-                "match_score": overlap,
-                "flavor_profile": spice.flavor_profile,
-                "recommended_quantity": spice.recommended_quantity
-            })
-
-    session.close()
-    matches.sort(key=lambda x: x["match_score"], reverse=True)
-    return {"status": "success", "suggestions": matches}
-
+        matches.sort(key=lambda x: x["match_score"], reverse=True)
+        return {"status": "success", "suggestions": matches}
+    except Exception:
+        return {"status": "error", "message": "Database not initialized"}
 
 def add_spice(spice_data: dict):
     """
@@ -53,7 +56,12 @@ def add_spice(spice_data: dict):
         - pairs_with_recipes: comma-separated list (optional)
     """
     session = SessionLocal()
+
+    if not isinstance(spice_data, dict):
+        spice_data = spice_data.model_dump()
+
     name = normalize_string(spice_data.get("name"))
+
     existing = session.query(Spice).filter_by(name=name).one_or_none()
     if existing:
         session.close()
@@ -154,6 +162,10 @@ def update_spice(spice_data: dict):
     or add new compatible ingredients and recipes.
     """
     session = SessionLocal()
+
+    if not isinstance(spice_data, dict):
+        spice_data = spice_data.model_dump()
+
     name = normalize_string(spice_data.get("name"))
     spice = session.query(Spice).filter_by(name=name).one_or_none()
     if not spice:

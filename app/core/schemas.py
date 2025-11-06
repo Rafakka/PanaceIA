@@ -86,3 +86,21 @@ class UpdateIngredientNameSchema(BaseModel):
     """
     old_name: str
     new_name: str
+
+class SpiceSchema(BaseModel):
+    """
+    Represents a spice object with all contextual attributes used for learning and suggestions.
+    
+    Attributes:
+        name (str): Spice name.
+        flavor_profile (str): Description of its taste (e.g., "warm and sweet").
+        recommended_quantity (str): Suggested usage, e.g., "1 tsp per 500g".
+        pairs_with_ingredients (List[str]): Ingredients it matches with.
+        pairs_with_recipes (List[str]): Recipes it commonly appears in.
+    """
+
+    name: StrictStr
+    flavor_profile: StrictStr | None = None
+    recommended_quantity: StrictStr | None = None
+    pairs_with_ingredients: List[StrictStr] = []
+    pairs_with_recipes: List[StrictStr] = []

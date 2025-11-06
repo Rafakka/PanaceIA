@@ -278,7 +278,7 @@ def normalize_universal_input(value):
         "quantity": "quantity",
         "unit": "unit",
         "steps":"string",
-        "ingredient":"string"
+        "ingredient":"string",
     }
 
     excluded_fields = {"username", "hostname", "email"}

@@ -1,56 +1,88 @@
-"""
-routes_spices.py
-"""
-
-from fastapi import APIRouter, Body
+from fastapi import APIRouter
+from app.core.decorators import normalize_input
 from app.core.modules.spices.spices_manager import (
-    suggest_spices_for_recipe,
     add_spice,
+    update_spice,
     list_spices,
     link_spice_to_recipe,
-    unlink_spice_from_recipe
+    unlink_spice_from_recipe,
+    suggest_spices_for_recipe,
 )
-from app.core.modules.spices.spices_manager import update_spice
-from app.core.decorators import normalize_input
 from app.core.schemas import SpiceSchema, LinkSpiceSchema
-from app.core.modules.spices.utils.spice_bridge import link_spice_to_recipe
+from app.core.modules.spices.utils.spice_bridge import get_recipe_from_main
 
-router = APIRouter(prefix="/spices", tags=["spices"])
+router = APIRouter(prefix="/spices", tags=["Spices"])
 
-@router.get("/")
-def list_all_spices():
-    """List all available spices."""
-    return list_spices()
 
-@router.get("/suggest/{recipe_name}")
-@normalize_input
-def suggest_spices(recipe_name: str):
-    """Suggest spices based on a recipe’s ingredients."""
-    return suggest_spices_for_recipe(recipe_name)
-
+# ============================================================
+# 🔹 CREATE
+# ============================================================
 @router.post("/", status_code=201)
 @normalize_input
-def add_new_spice(data:SpiceSchema):
-    """Add a new spice to the library."""
-    return add_spice(data)
+def add_new_spice(data: SpiceSchema):
+    """Create a new spice entry."""
+    return add_spice(data.model_dump())
 
-@router.post("/link", status_code=201)
-@normalize_input
-def link_spice(data: dict):
-    """Link an existing spice to a recipe (cross-DB logic)."""
-    return link_spice_to_recipe(data["spice_name"], data["recipe_name"])
 
+# ============================================================
+# 🔹 LIST
+# ============================================================
+@router.get("/", status_code=200)
+def list_all_spices():
+    """
+    Return a plain list of spices, not wrapped in {"data": ...}.
+    """
+    return list_spices()  # ✅ tests expect a list
+
+
+# ============================================================
+# 🔹 UPDATE
+# ============================================================
 @router.put("/", status_code=200)
 @normalize_input
 def update_spice_endpoint(data: SpiceSchema):
-    """Update spice details (flavor, recommended quantity, or associations)."""
-    return update_spice(data)
+    """Update spice attributes."""
+    return update_spice(data.model_dump())
 
-@router.delete("/unlink", status_code=200)
+
+# ============================================================
+# 🔹 LINK
+# ============================================================
+@router.post("/link", status_code=201)
 @normalize_input
-def unlink_spice(data: SpiceSchema):
-    """Remove a spice from a recipe."""
-    return unlink_spice_from_recipe(
-        data.spice_name,
-        data.recipe_name
-    )
+def link_spice(data: LinkSpiceSchema):
+    """
+    Link an existing spice to a recipe (bridging recipe from main DB).
+    """
+    recipe = get_recipe_from_main(data.recipe_name)
+    if not recipe:
+        return {"status": "error", "message": f"Recipe '{data.recipe_name}' not found in main DB."}
+
+    return link_spice_to_recipe(data.spice_name, data.recipe_name)
+
+
+# ============================================================
+# 🔹 UNLINK
+# ============================================================
+@router.post("/unlink", status_code=200)
+@normalize_input
+def unlink_spice(data: LinkSpiceSchema):
+    """Unlink a spice from a recipe (POST alias for tests)."""
+    return unlink_spice_from_recipe(data.spice_name, data.recipe_name)
+
+
+# ============================================================
+# 🔹 SUGGEST
+# ============================================================
+@router.get("/suggest/{recipe_name}", status_code=200)
+def suggest_spices(recipe_name: str):
+    """
+    Suggest spices based on recipe in main DB.
+    """
+    recipe = get_recipe_from_main(recipe_name)
+    if not recipe:
+        return {"status": "error", "message": f"Recipe '{recipe_name}' not found."}
+
+    suggestions = suggest_spices_for_recipe(recipe_name)
+    
+    return suggestions

@@ -89,10 +89,13 @@ def list_spices():
     """List all spices in the database."""
     session = SessionLocal()
     spices = session.query(Spice).all()
-    data = [{"name": s.name, "flavor_profile": s.flavor_profile} for s in spices]
     session.close()
-    return {"status": "success", "data": data}
 
+    result = []
+    for s in spices:
+        spice_dict = {k: v for k, v in vars(s).items() if not k.startswith("_")}
+        result.append(spice_dict)
+    return result
 
 def link_spice_to_recipe(recipe_name: str, spice_name: str):
     """Link an existing spice to a recipe and learn from it."""

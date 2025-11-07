@@ -13,7 +13,7 @@ Author: Rafael Kaher
 
 from app.core.data_cleaner import normalize_universal_input
 from app.core import db_manager
-from app.core.db_manager import Ingredient, RecipeIngredient
+from app.core.db_manager import Ingredient, RecipeIngredient, SessionLocal
 
 def add_ingredient(ingredient_data: dict):
     """
@@ -149,31 +149,32 @@ def update_ingredient_name(ingredient_data: dict):
 
     if not isinstance(ingredient_data, dict):
         ingredient_data = ingredient_data.model_dump()
-    
+
     clean_data = normalize_universal_input(ingredient_data)
-    old_name = clean_data["old_name"]
-    new_name = clean_data["new_name"]
 
-    existing = session.query(Ingredient).filter_by(name=new_name).first()
-    if existing:
-        session.close()
-        return {"status": "error", "message": f"Ingredient '{new_name}' already exists."}
+    old_name = clean_data.get("old_name")
+    new_name = clean_data.get("new_name")
+    quantity = clean_data.get("quantity")
 
-    ingredient = session.query(Ingredient).filter_by(name=old_name).one_or_none()
+    ingredient = session.query(Ingredient).filter_by(name=old_name).first()
     if not ingredient:
         session.close()
-        return {"status": "error", "message": f"'{old_name}' not found."}
+        return {"status": "error", "message": f"Ingredient '{old_name}' not found."}
+
+    if new_name != old_name:
+        existing = session.query(Ingredient).filter_by(name=new_name).first()
+        if existing:
+            session.close()
+            return {"status": "error", "message": f"Ingredient '{new_name}' already exists."}
 
     ingredient.name = new_name
+    if quantity is not None:
+        ingredient.quantity = quantity
 
-    try:
-        session.commit()
-        session.close()
-        return {"status": "success", "updated": old_name, "new_name": new_name}
-    except Exception as e:
-        session.rollback()
-        session.close()
-        return {"status": "error", "message": str(e)}
+    session.commit()
+    session.close()
+
+    return {"status": "success", "message": f"Ingredient '{old_name}' updated successfully."}
 
 
 def update_ingredient_quantity(ingredient_data: dict):

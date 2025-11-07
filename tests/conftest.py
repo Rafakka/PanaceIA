@@ -19,46 +19,52 @@ from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core import db_manager
-from app.core.modules.spices.db.spices_models import Spice
-from app.core.db_manager import Base, engine
+from app.core.modules.spices.db import spices_models
+from app.core.db_manager import Base
+from app.core.db_manager import engine as main_engine
+from sqlalchemy.orm import close_all_sessions
 
 # ---------------------------------------------------------------------------
 # 1. DATABASE FIXTURE — shared in-memory SQLite engine for tests
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="function", autouse=True)
-def setup_test_db(monkeypatch):
+def setup_test_dbs(monkeypatch):
     """
-    Creates a shared in-memory SQLite database and patches SessionLocal
-    so every test runs with a clean schema and isolated transaction.
-
-    This fixture runs automatically for every test function.
+    Recreates clean recipe + spice databases before each test.
+    Ensures both engines share the same lifecycle so data doesn’t persist between tests.
     """
+    main_engine = db_manager.engine
+    MainSessionLocal = sessionmaker(bind=main_engine)
 
-    # Create a shared in-memory database accessible across threads
-    test_engine = create_engine(
-        "sqlite:///file::memory:?cache=shared",
-        echo=False,
-        connect_args={"check_same_thread": False},  # allow FastAPI thread access
+    db_manager.Base.metadata.drop_all(bind=main_engine)
+    db_manager.Base.metadata.create_all(bind=main_engine)
+
+    def override_main_session():
+        return MainSessionLocal()
+
+    monkeypatch.setattr("app.core.db_manager.SessionLocal", override_main_session)
+
+    spice_engine = spices_models.engine
+    SpiceSessionLocal = sessionmaker(bind=spice_engine)
+
+    spices_models.Base.metadata.drop_all(bind=spice_engine)
+    spices_models.Base.metadata.create_all(bind=spice_engine)
+
+    def override_spice_session():
+        return SpiceSessionLocal()
+
+    monkeypatch.setattr(
+        "app.core.modules.spices.db.spices_models.SessionLocal",
+        override_spice_session,
     )
 
-    # Create a session factory bound to this engine
-    TestingSessionLocal = sessionmaker(bind=test_engine)
-
-    # Create all tables for the tests
-    db_manager.Base.metadata.create_all(test_engine)
-
-    # Patch the SessionLocal in db_manager to point to our test session
-    def override_session():
-        return TestingSessionLocal()
-
-    monkeypatch.setattr("app.core.db_manager.SessionLocal", override_session)
-
-    yield  # ---- Run the test ----
-
-    # Drop all tables after each test to ensure a clean state
-    db_manager.Base.metadata.drop_all(test_engine)
-
+    try:
+        yield
+    finally:
+        close_all_sessions()
+        main_engine.dispose()
+        spice_engine.dispose()
 
 # ---------------------------------------------------------------------------
 # 2. FASTAPI TEST CLIENT FIXTURE
@@ -77,10 +83,10 @@ def test_client():
     """
     with TestClient(app) as client:
         yield client
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_db():
-    """Ensure all tables (including spices) exist for tests."""
+        
+@pytest.fixture(scope="session", autouse=False)
+def legacy_db_setup():
+    from app.core.db_manager import Base, engine
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)

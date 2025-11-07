@@ -13,6 +13,7 @@ from app.core.modules.spices.spices_manager import (
 from app.core.modules.spices.spices_manager import update_spice
 from app.core.decorators import normalize_input
 from app.core.schemas import SpiceSchema, LinkSpiceSchema
+from app.core.modules.spices.utils.spice_bridge import link_spice_to_recipe
 
 router = APIRouter(prefix="/spices", tags=["spices"])
 
@@ -35,12 +36,9 @@ def add_new_spice(data:SpiceSchema):
 
 @router.post("/link", status_code=201)
 @normalize_input
-def link_spice(data: LinkSpiceSchema):
-    """Link an existing spice to a recipe."""
-    return link_spice_to_recipe(
-        data.spice_name,
-        data.recipe_name
-    )
+def link_spice(data: dict):
+    """Link an existing spice to a recipe (cross-DB logic)."""
+    return link_spice_to_recipe(data["spice_name"], data["recipe_name"])
 
 @router.put("/", status_code=200)
 @normalize_input

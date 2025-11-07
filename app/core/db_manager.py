@@ -12,8 +12,20 @@ Author: Rafael Kaher
 
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+import os
 
-engine = create_engine("sqlite:///app/database/recipes.db", echo=False)
+if "PYTEST_CURRENT_TEST" in os.environ:
+    # Shared in-memory DB for tests
+    engine = create_engine(
+        "sqlite:///file::memory:?cache=shared",
+        connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(
+        "sqlite:///recipes.db",
+        connect_args={"check_same_thread": False}
+    )
+
 Base = declarative_base()
 SessionLocal = sessionmaker(bind=engine)
 

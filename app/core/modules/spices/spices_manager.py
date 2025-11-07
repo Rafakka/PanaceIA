@@ -9,43 +9,17 @@ from app.core.db_manager import Recipe, RecipeSpice
 from app.core.modules.spices.db.spices_models import SessionLocal, Spice
 from app.core.data_cleaner import normalize_string
 from collections import Counter
+from app.core.modules.spices.utils.spice_bridge import link_spice_to_recipe as bridge_link_spice_to_recipe
+from app.core.modules.spices.utils.spice_bridge import unlink_spice_from_recipe as bridge_unlink_spice_from_recipe
+from app.core.modules.spices.utils.spice_bridge import suggest_spices_for_recipe as bridge_suggest_spices_for_recipe
 
 def suggest_spices_for_recipe(recipe_name: str):
     """
-    Suggest spices based on stored relationships, with context:
-    - flavor_profile
-    - recommended_quantity
+    Suggest spices that pair well with a recipe.
+    Delegates to the cross-database bridge.
     """
-    session = SessionLocal()
-    clean_name = normalize_string(recipe_name)
-    try:
-
-        recipe = session.query(Recipe).filter_by(name=clean_name).one_or_none()
-
-        if not recipe:
-            session.close()
-            return {"status": "error", "message": f"Recipe '{clean_name}' not found."}
-
-        recipe_ingredients = [ri.ingredient.name for ri in recipe.recipe_ingredients]
-        all_spices = session.query(Spice).all()
-
-        matches = []
-        for spice in all_spices:
-            pairs = spice.pairs_with_ingredients.split(",") if spice.pairs_with_ingredients else []
-            overlap = len(set(pairs) & set(recipe_ingredients))
-            if overlap > 0:
-                matches.append({
-                    "name": spice.name,
-                    "match_score": overlap,
-                    "flavor_profile": spice.flavor_profile,
-                    "recommended_quantity": spice.recommended_quantity
-                })
-
-        session.close()
-        matches.sort(key=lambda x: x["match_score"], reverse=True)
-        return {"status": "success", "suggestions": matches}
-    except Exception:
-        return {"status": "error", "message": "Database not initialized"}
+    result = bridge_suggest_spices_for_recipe(recipe_name)
+    return result
 
 def add_spice(spice_data: dict):
     """
@@ -98,65 +72,27 @@ def list_spices():
     return result
 
 def link_spice_to_recipe(recipe_name: str, spice_name: str):
-    """Link an existing spice to a recipe and learn from it."""
-    session = SessionLocal()
-    clean_recipe = normalize_string(recipe_name)
-    clean_spice = normalize_string(spice_name)
+    """
+    Link an existing spice to a recipe and learn from it.
+    Delegates to the cross-database bridge to ensure both
+    recipe and spice are validated across their databases.
+    """
+    result = bridge_link_spice_to_recipe(spice_name, recipe_name)
 
-    recipe = session.query(Recipe).filter_by(name=clean_recipe).one_or_none()
-    spice = session.query(Spice).filter_by(name=clean_spice).one_or_none()
-
-    if not recipe or not spice:
-        session.close()
-        return {"status": "error", "message": "Recipe or spice not found."}
-
-    existing = (
-        session.query(RecipeSpice)
-        .filter_by(recipe_id=recipe.id, spice_id=spice.id)
-        .one_or_none()
-    )
-    if existing:
-        session.close()
-        return {"status": "error", "message": f"'{spice.name}' already linked to '{recipe.name}'."}
-
-    link = RecipeSpice(recipe=recipe, spice=spice)
-    session.add(link)
-
-    recipes_known = set(spice.pairs_with_recipes.split(",")) if spice.pairs_with_recipes else set()
-    recipes_known.add(recipe.name)
-    spice.pairs_with_recipes = ",".join(recipes_known)
-
-    session.commit()
-    session.close()
-    return {"status": "success", "message": f"'{spice.name}' linked to '{recipe.name}' and learned from it."}
-
+    if result.get("status") == "success":
+        return {"status": "success", "message": result.get("message", "Linked successfully.")}
+    return {"status": "error", "message": result.get("message", "Link failed.")}
 
 def unlink_spice_from_recipe(recipe_name: str, spice_name: str):
-    """Remove a spice from a recipe."""
-    session = SessionLocal()
-    clean_recipe = normalize_string(recipe_name)
-    clean_spice = normalize_string(spice_name)
+    """
+    Unlink an existing spice from a recipe across databases.
+    Delegates to the cross-database bridge.
+    """
+    result = bridge_unlink_spice_from_recipe(spice_name=spice_name, recipe_name=recipe_name)
 
-    recipe = session.query(Recipe).filter_by(name=clean_recipe).one_or_none()
-    spice = session.query(Spice).filter_by(name=clean_spice).one_or_none()
-
-    if not recipe or not spice:
-        session.close()
-        return {"status": "error", "message": "Recipe or spice not found."}
-
-    link = (
-        session.query(RecipeSpice)
-        .filter_by(recipe_id=recipe.id, spice_id=spice.id)
-        .one_or_none()
-    )
-    if not link:
-        session.close()
-        return {"status": "error", "message": f"'{spice.name}' not linked to '{recipe.name}'."}
-
-    session.delete(link)
-    session.commit()
-    session.close()
-    return {"status": "success", "message": f"'{spice.name}' unlinked from '{recipe.name}'."}
+    if result.get("status") == "success":
+        return {"status": "success", "message": result.get("message", "Unlinked successfully.")}
+    return {"status": "error", "message": result.get("message", "Unlink failed.")}
 
 def update_spice(spice_data: dict):
     """

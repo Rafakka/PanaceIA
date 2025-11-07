@@ -1,99 +1,152 @@
-
 """
 app/core/modules/spices/utils/spice_bridge.py
 
-Smart bridge between the main recipes DB and the spices DB.
-It automatically detects whether the environment is running in testing
-or production mode and adjusts connections accordingly.
+Bridge between the main recipes DB and the spices DB.
+Ensures both databases communicate correctly in tests and production.
 """
 
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.core.db_manager import Recipe, engine as main_engine
-from app.core.modules.spices.db.spices_models import (
-    SessionLocal as SpiceSessionLocal,
-    engine as spice_engine,
-    Base as SpiceBase,
-)
 from app.core import db_manager
+from app.core.modules.spices.db.spices_models import (
+    Spice,
+    SessionLocal as SpiceSessionLocal,
+)
+from sqlalchemy import func
 
 # ------------------------------------------------------
-# 🧠 Dynamic environment-aware DB routing
+# 🧠 Sessions for both DBs
 # ------------------------------------------------------
 
 def get_main_session():
-    """
-    Return a Session for the main DB.
-    Automatically uses in-memory SQLite when running under pytest.
-    """
-    if "PYTEST_CURRENT_TEST" in os.environ:
-        
-        SessionLocal = sessionmaker(bind=main_engine)
-        return SessionLocal()
-    else:
-        return db_manager.SessionLocal()
+    """Return a session for the main recipes database."""
+    return db_manager.SessionLocal()
 
 
 def get_spice_session():
-    """
-    Return a Session for the spices DB.
+    """Return a session for the spices database."""
+    return SpiceSessionLocal()
 
-    During pytest, this reuses the patched SessionLocal 
-    defined in app.core.modules.spices.db.spices_models, 
-    which conftest.py overrides to use a shared in-memory engine.
-    """
-    if "PYTEST_CURRENT_TEST" in os.environ:
-
-        return SpiceSessionLocal()
-
-    SessionLocal = sessionmaker(bind=spice_engine)
-    return SessionLocal()
 
 # ------------------------------------------------------
 # 🔗 Bridge Logic
 # ------------------------------------------------------
 
 def get_recipe_from_main(recipe_name: str):
-    """Fetch a recipe by name from the main (recipes) DB using the ORM model."""
+    """Fetch a recipe from the main database by name."""
+    from app.core.db_manager import Recipe
     session = get_main_session()
-    recipe = session.query(Recipe).filter_by(name=recipe_name).first()
-    session.close()
-    return recipe
-
+    try:
+        recipe = session.query(Recipe).filter_by(name=recipe_name).first()
+        if not recipe:
+            print(f"❌ Recipe '{recipe_name}' not found in main DB.")
+            return None
+        print(f"✅ Found recipe '{recipe_name}' in main DB.")
+        return recipe
+    except Exception as e:
+        print(f"⚠️ Error fetching recipe '{recipe_name}': {e}")
+        return None
+    finally:
+        session.close()
 
 def link_spice_to_recipe(spice_name: str, recipe_name: str):
     """Validate both spice and recipe exist across their DBs."""
-    recipe = get_recipe_from_main(recipe_name)
-    spice_session = get_spice_session()
-    spice = spice_session.query(Spice).filter_by(name=spice_name).first()
-    spice_session.close()
+    print(f"🔗 Linking spice '{spice_name}' → recipe '{recipe_name}'")
 
+    recipe = get_recipe_from_main(recipe_name)
     if not recipe:
+        print(f"❌ Recipe '{recipe_name}' not found in main DB.")
         return {"status": "error", "message": f"Recipe '{recipe_name}' not found."}
+
+    spice_session = get_spice_session()
+    spices = spice_session.query(Spice).all()
+
+    print("\n🧂 [DEBUG] SPICES SNAPSHOT:")
+    for s in spices:
+        print(f"   -> id={s.id}, name={s.name!r}, type={type(s.name)}, flavor_profile={s.flavor_profile!r}")
+
+    spice = next((s for s in spices if s.name.strip().lower() == spice_name.strip().lower()), None)
+
     if not spice:
+        print(f"❌ Spice '{spice_name}' not found in spice DB.")
+        spice_session.close()
         return {"status": "error", "message": f"Spice '{spice_name}' not found."}
 
+    spice_session.close()
+    print(f"✅ Linked spice '{spice.name}' → recipe '{recipe.name}' successfully.")
     return {
         "status": "success",
-        "message": f"Linked spice '{spice_name}' → recipe '{recipe_name}'."
+        "message": f"Linked spice '{spice.name}' → recipe '{recipe.name}'."
+    }
+
+def unlink_spice_from_recipe(spice_name: str, recipe_name: str):
+    """Simulate unlinking a spice from a recipe."""
+    print(f"🔗 Unlinking spice '{spice_name}' ← recipe '{recipe_name}'")
+
+    recipe = get_recipe_from_main(recipe_name)
+    if not recipe:
+        print(f"❌ Recipe '{recipe_name}' not found in main DB.")
+        return {"status": "error", "message": f"Recipe '{recipe_name}' not found."}
+
+    spice_session = get_spice_session()
+    spices = spice_session.query(Spice).all()
+
+    spice = next((s for s in spices if s.name.strip().lower() == spice_name.strip().lower()), None)
+    if not spice:
+        print(f"❌ Spice '{spice_name}' not found in spice DB.")
+        spice_session.close()
+        return {"status": "error", "message": f"Spice '{spice_name}' not found."}
+
+    print(f"✅ Unlinked spice '{spice.name}' ← recipe '{recipe.name}' successfully.")
+    spice_session.close()
+    return {
+        "status": "success",
+        "message": f"Unlinked spice '{spice.name}' ← recipe '{recipe.name}' successfully."
     }
 
 
 def suggest_spices_for_recipe(recipe_name: str):
     """Suggest spices that pair well with a given recipe."""
+    print(f"🧠 Suggesting spices for recipe '{recipe_name}'")
+
     recipe = get_recipe_from_main(recipe_name)
     if not recipe:
-        return {"status": "error", "message": f"Recipe '{recipe_name}' not found."}
+        print(f"❌ Recipe '{recipe_name}' not found in main DB.")
+        return []
 
     spice_session = get_spice_session()
     spices = spice_session.query(Spice).all()
+
+    print("🧂 [DEBUG] Checking spices for matching pairs...")
+    suggestions = []
+
+    for s in spices:
+        
+        pairs_with_recipes = []
+        pairs_with_ingredients = []
+
+        if isinstance(s.pairs_with_recipes, str):
+            pairs_with_recipes = [r.strip().lower() for r in s.pairs_with_recipes.split(",") if r.strip()]
+        elif isinstance(s.pairs_with_recipes, list):
+            pairs_with_recipes = [r.strip().lower() for r in s.pairs_with_recipes]
+
+        if isinstance(s.pairs_with_ingredients, str):
+            pairs_with_ingredients = [i.strip().lower() for i in s.pairs_with_ingredients.split(",") if i.strip()]
+        elif isinstance(s.pairs_with_ingredients, list):
+            pairs_with_ingredients = [i.strip().lower() for i in s.pairs_with_ingredients]
+        recipe_match = recipe_name.lower() in pairs_with_recipes
+        ingredient_match = any(
+            ing.name.lower() in pairs_with_ingredients
+            for ing in getattr(recipe, "ingredients", [])
+        )
+
+        if recipe_match or ingredient_match:
+            print(f"✅ Matched spice '{s.name}'")
+            suggestions.append({
+                "name": s.name,
+                "flavor_profile": s.flavor_profile,
+                "recommended_quantity": s.recommended_quantity
+            })
+
     spice_session.close()
 
-    matching = [
-        s.name for s in spices
-        if recipe.name in (s.pairs_with_recipes or []) or
-           any(ing.name in (s.pairs_with_ingredients or []) for ing in getattr(recipe, "ingredients", []))
-    ]
-
-    return {"status": "success", "data": matching}
+    print(f"🎯 Final suggestions: {[s['name'] for s in suggestions]}")
+    return suggestions

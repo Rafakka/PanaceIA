@@ -45,56 +45,54 @@ def add_recipe(recipe_data: dict):
         ```
     """
     session = db_manager.SessionLocal()
+    try:
+        if not isinstance(recipe_data, dict):
+            recipe_data = recipe_data.model_dump()
 
-    if not isinstance(recipe_data, dict):
-        recipe_data = recipe_data.model_dump()
-
-    clean_recipe = normalize_universal_input(recipe_data)
-    if "ingredients" in clean_recipe and isinstance(clean_recipe["ingredients"], list):
+        clean_recipe = normalize_universal_input(recipe_data)
         clean_recipe["ingredients"] = [
-            normalize_universal_input(ingredient)
-            for ingredient in clean_recipe["ingredients"]
-            if isinstance(ingredient, dict)
+            normalize_universal_input(i)
+            for i in clean_recipe.get("ingredients", [])
+            if isinstance(i, dict)
         ]
 
-    name = clean_recipe["name"]
-    steps = clean_recipe["steps"]
-    ingredient_data = clean_recipe["ingredients"]
+        name = clean_recipe["name"]
+        steps = clean_recipe["steps"]
 
-    existing = session.query(Recipe).filter_by(name=name).one_or_none()
-    if existing:
+        existing = session.query(Recipe).filter_by(name=name).one_or_none()
+        if existing:
+            return {"status": "error", "message": f"Recipe '{name}' already exists."}
+
+        recipe = Recipe(name=name, steps=steps)
+        session.add(recipe)
+
+        for data in clean_recipe["ingredients"]:
+            ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
+            if not ingredient:
+                ingredient = Ingredient(name=data["name"], unit=data["unit"])
+                session.add(ingredient)
+            session.add(
+                RecipeIngredient(recipe=recipe, ingredient=ingredient, quantity=data.get("quantity", 0.0))
+            )
+
+        session.flush()
+        session.refresh(recipe)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        return {"status": "error", "message": str(e)}
+    finally:
         session.close()
-        return {"status": "error", "message": f"Recipe name '{name}' already exists."}
-
-    recipe = Recipe(name=name, steps=steps)
-    session.add(recipe)
-
-    for data in ingredient_data:
-        ingredient = session.query(Ingredient).filter_by(name=data["name"]).first()
-        if not ingredient:
-            ingredient = Ingredient(name=data["name"], unit=data["unit"])
-            session.add(ingredient)
-
-        link = RecipeIngredient(
-            recipe=recipe,
-            ingredient=ingredient,
-            quantity=data.get("quantity", 0.0)
-        )
-        session.add(link)
-
-    session.commit()
 
     for spice in recipe_data.get("spices", []):
         try:
             from app.core.modules.spices.spices_manager import link_spice_to_recipe
-            link_spice_to_recipe(recipe.name, spice)
-            auto_learn_from_recipe(recipe.name)
+            link_spice_to_recipe(name, spice)
+            auto_learn_from_recipe(name)
         except Exception as e:
             print(f"⚠️ Warning: could not link spice '{spice}' → {e}")
 
-    session.close()
     return {"status": "success", "message": f"Recipe '{name}' created successfully."}
-
 
 def list_recipes():
 

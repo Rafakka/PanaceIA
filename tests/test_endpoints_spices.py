@@ -19,6 +19,7 @@ def test_add_and_list_spices():
     res = client.post("/spices/", json=spice)
     assert res.status_code == 201
     data = res.json()
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert data["status"] == "success"
     assert "Cinnamon" in data["message"]
 
@@ -26,6 +27,7 @@ def test_add_and_list_spices():
     res = client.get("/spices/")
     assert res.status_code == 200
     data = res.json()
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert isinstance(data, list)
     assert any(sp["name"] == "Cinnamon" for sp in data)
 
@@ -53,12 +55,14 @@ def test_update_spice():
     res = client.put("/spices/", json=update_data)
     assert res.status_code == 200
     data = res.json()
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert data["status"] == "success"
     assert "Nutmeg" in data["message"]
 
     # Verify update
     res = client.get("/spices/")
     spices = res.json()
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     updated = next((s for s in spices if s["name"] == "Nutmeg"), None)
     assert updated
     assert "aromatic" in updated["flavor_profile"]
@@ -78,6 +82,7 @@ def test_link_and_unlink_spice():
         ],
     }
     res = client.post("/recipes/", json=recipe)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code == 201
 
     # Create a spice
@@ -89,11 +94,13 @@ def test_link_and_unlink_spice():
         "pairs_with_recipes": ["Apple Pie"],
     }
     res = client.post("/spices/", json=spice)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code == 201
 
     # Link spice to recipe
     link_data = {"spice_name": "Cinnamon", "recipe_name": "Apple Pie"}
     res = client.post("/spices/link", json=link_data)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code == 201
     data = res.json()
     assert data["status"] == "success"
@@ -101,6 +108,7 @@ def test_link_and_unlink_spice():
     # Unlink spice
     unlink_data = {"spice_name": "Cinnamon", "recipe_name": "Apple Pie"}
     res = client.post("/spices/unlink", json=unlink_data)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "success"
@@ -130,6 +138,7 @@ def test_suggest_spices_for_recipe():
         "pairs_with_recipes": ["Banana Bread"],
     }
     res = client.post("/spices/", json=spice)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code == 201
 
     # Suggest spices for the recipe

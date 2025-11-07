@@ -12,6 +12,9 @@ Key Fixtures
   and after each test. Patches SessionLocal so all managers use the same engine.
 - test_client: Provides a FastAPI TestClient connected to the in-memory database.
 """
+import importlib
+import app.core.modules.spices.utils.spice_bridge as spice_bridge
+importlib.reload(spice_bridge)
 
 import pytest
 from sqlalchemy.orm import sessionmaker, Session, close_all_sessions
@@ -55,11 +58,6 @@ def setup_test_dbs(monkeypatch):
         "app.core.modules.spices.db.spices_models.SessionLocal",
         override_spice_session
     )
-
-    # 4️⃣ Patch the spice bridge to share the same db_manager
-    import app.core.db_manager as main_db_manager
-    import app.core.modules.spices.utils.spice_bridge as spice_bridge
-    monkeypatch.setattr(spice_bridge, "db_manager", main_db_manager)
 
     try:
         yield

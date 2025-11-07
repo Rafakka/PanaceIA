@@ -1,8 +1,20 @@
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from app.core.db_manager import Base
+import os
 
-engine = create_engine("sqlite:///app/core/modules/spices/db/spices.db", echo=False)
+
+if "PYTEST_CURRENT_TEST" in os.environ:
+    engine = create_engine(
+        "sqlite:///file::memory:?cache=shared",
+        connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(
+        "sqlite:///spices.db",
+        connect_args={"check_same_thread": False}
+    )
+
 SessionLocal = sessionmaker(bind=engine)
 
 class Spice(Base):

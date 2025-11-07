@@ -46,6 +46,7 @@ def test_full_spice_integration_flow():
     # 4️⃣ Link spice → recipe (cross-DB bridge)
     link_data = {"spice_name": "Cinnamon", "recipe_name": "Banana Cake"}
     res = client.post("/spices/link", json=link_data)
+    print("\n\nDEBUG RESPONSE:", res.json(), "\n\n") 
     assert res.status_code in (200, 201)
     body = res.json()
     assert body["status"] == "success"

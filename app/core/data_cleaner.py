@@ -265,6 +265,50 @@ def validate_and_clean_recipe(raw_data: dict):
     return {"status": "success", "data": clean_recipe(valid.model_dump())}
 
 def normalize_universal_input(value):
+    """
+    It takes inputs and normalize them, it reconizes strings, unit and floats.
+    If it doesnt reconize the data keep it as it is.
+
+
+    Args:
+        value (dict): Must contain:
+            - `name` (str)
+            - `steps` (str)
+            - `ingredients` (list[dict])
+
+        or
+
+        value (str/float): can be string or float:
+            - `value` (str)
+            - `value` (float)
+
+    Returns:
+        dict: A response dictionary with status and cleaned data
+        value : A sigle string or a sigle float
+
+    Example:
+        ```python
+        normalize_universal_input(PanCakes)
+        #Returns: {"Pancakes"}
+
+        normalize_universal_input({
+            "name": "PAnCakeS",
+            "steps": "mix ingRedieNts aNd fRy unTIl goLDen.",
+            "ingredients": [
+                {"name": "FloUr", "quantity": 200, "unit": "Gramas"},
+                {"name": "MILk", "quantity": 250, "unit": "Militros"}
+            ]
+        })
+        #Returns: {"{
+            "name": "Pancakes",
+            "steps": "Mix ingredients and fry until golden.",
+            "ingredients": [
+                {"name": "Flour", "quantity": 200.0 "unit": "Grm"},
+                {"name": "Milk", "quantity": 250.0 "unit": "Mls"}
+            ]
+        }"}
+        ```
+    """
     available_cleaners = {
         fn.split("normalize_")[1]: func
         for fn, func in globals().items()

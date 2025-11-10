@@ -106,5 +106,21 @@ class SpiceSchema(BaseModel):
     pairs_with_recipes: List[StrictStr] = Field(default_factory=list)
 
 class LinkSpiceSchema(BaseModel):
+    """
+    Schema used for linking spice to recipe.
+    Attributes:
+
+        spice_name (str): The spice name to link to a recipe.
+        recipe_name (str): The recipe name to be linked.
+
+    Usage Example:
+        ```python
+        UpdateIngredientNameSchema(
+            spice_name="Cinamon",
+            recipe_name="Panquekes"
+        )
+        ```
+        
+    """
     spice_name: str
     recipe_name: str

@@ -1,9 +1,17 @@
+"""
+decorators.py
+
+This module creates a layer of cleaning for the endpoints, it takes cleaning and
+abstract it to a cleaning layer injection's.
+I recieves a value and return as the same type as received, just cleaned.
+
+"""
+
 from functools import wraps
 from app.core.data_cleaner import normalize_universal_input
 import inspect
 
 def normalize_input(func):
-    """Automatically normalize input dictionaries for FastAPI endpoints."""
     @wraps(func)
     async def wrapper(*args, **kwargs):
         if len(kwargs) == 1 and isinstance(list(kwargs.values())[0], dict):

@@ -11,7 +11,6 @@ from app.core.modules.spices.spices_manager import (
 from app.core.schemas import SpiceSchema, LinkSpiceSchema
 from app.core.modules.spices.utils.spice_bridge import get_recipe_from_main
 
-# ✅ This variable must exist so main.py can import it
 router = APIRouter(prefix="/spices", tags=["Spices"])
 
 

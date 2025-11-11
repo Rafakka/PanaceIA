@@ -1,95 +1,71 @@
 """
-import_manager.py
+PanaceIA Import Gateway
+=======================
 
-Handles ingestion of external recipe data into PanaceIA's internal schema.
-Acts as a 'universal port' for structured recipe imports from crawlers or APIs.
-
-Author: Rafael Kaher
+Handles ingestion, validation, and normalization of external recipe or spice data.
+Outputs API-like responses for smooth integration with other modules.
 """
 
 from typing import List, Dict, Any
-from app.core.data_cleaner import validate_and_clean_recipe, normalize_universal_input
-from app.core.modules.recipes.recipes_manager import add_recipe
-from app.core.modules.ingredients.ingredients_manager import add_ingredient
+from app.core.data_cleaner import validate_and_clean_recipe
 
+# ---------------------------------------------------------------------------
+# 🔹 Single Importer
+# ---------------------------------------------------------------------------
 
 def import_single_recipe(raw_recipe: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Import a single recipe object from external structured data.
-
-    Args:
-        raw_recipe (dict): The external recipe data. Example:
-            {
-                "title": "Pancakes",
-                "instructions": "Mix and fry.",
-                "items": [
-                    {"ingredient_name": "Flour", "qty": 200, "measurement": "grams"},
-                    {"ingredient_name": "Milk", "qty": 250, "measurement": "mls"}
-                ]
-            }
+    Normalize and validate a single recipe payload.
 
     Returns:
-        dict: Result of the import process, e.g.:
-            {
-                "status": "success",
-                "imported": "Pancakes",
-                "details": { ... cleaned recipe ... }
-            }
+        dict: {"status": "success", "data": {...}} or {"status": "error", "message": "..."}
     """
 
-    # 🔁 Step 1 — Map external keys to PanaceIA schema
-    mapped_data = {
-        "name": raw_recipe.get("name") or raw_recipe.get("title"),
-        "steps": raw_recipe.get("steps") or raw_recipe.get("instructions"),
-        "ingredients": []
-    }
+    if not isinstance(raw_recipe, dict):
+        return {"status":"error", "message":"Invalid recipe structure"}
 
-    for item in raw_recipe.get("ingredients", []) or raw_recipe.get("items", []):
-        mapped_data["ingredients"].append({
-            "name": item.get("name") or item.get("ingredient_name"),
-            "quantity": item.get("quantity") or item.get("qty"),
-            "unit": item.get("unit") or item.get("measurement")
-        })
+    name = raw_recipe.get ("name","")
+    steps = raw_recipe.get ("steps","")
+    ingredients = raw_recipe.get ("ingredients",[])
 
-    # 🧼 Step 2 — Clean and validate
-    cleaned = validate_and_clean_recipe(mapped_data)
-    if cleaned["status"] != "success":
-        return {"status": "error", "message": "Invalid recipe structure", "details": cleaned}
+    if not name or not steps or not isinstance(ingredients, list):
+        return {"status":"error", "message":"Invalid recipe structure"}
 
-    # 💾 Step 3 — Persist to DB
-    result = add_recipe(cleaned["data"])
-    return {
-        "status": result.get("status", "error"),
-        "imported": mapped_data["name"],
-        "message": result.get("message"),
-        "details": cleaned["data"]
-    }
+    for ing in ingredients:
+        q = str(ing.get("quantity", "")).strip()
+        if not q:
+            return {"status":"error", "message": f"Invalid quantity for ingredient '{ing.get('name','?')}'"}
+        try:
+            _ = float(q)
+        except ValueError:
+            return {"status":"error", "message": f"Invalid quantity for ingredient '{ing.get('name','?')}'"}
+    
+    try:
+        from app.core.data_cleaner import normalize_universal_input
+        cleaned = normalize_universal_input(raw_recipe)
+    except Exception as e:
+        return {"status": "error", "message": f"Normalization failed: {e}"}
 
+    for ing in cleaned.get("ingredients", []):
+        ing["quantity"] = float(ing["quantity"])
 
-def import_bulk_recipes(data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    return {"status":"success", "data": cleaned}
+
+# ---------------------------------------------------------------------------
+# 🔹 Bulk Importer
+# ---------------------------------------------------------------------------
+
+def import_bulk_recipes(list_of_raws: list[dict]) -> list[dict]:
     """
-    Import multiple recipes at once from an external data source.
+    Normalize multiple recipes, keeping individual status per recipe.
 
     Args:
         data (list[dict]): List of raw recipe dictionaries.
 
     Returns:
-        dict: Summary of successes and errors.
+        list[dict]: Each item contains {"status": ..., "data" or "message": ...}
     """
-    successes = []
-    errors = []
-
-    for recipe in data:
-        result = import_single_recipe(recipe)
-        if result["status"] == "success":
-            successes.append(result["imported"])
-        else:
-            errors.append(result)
-
-    return {
-        "status": "completed",
-        "success_count": len(successes),
-        "error_count": len(errors),
-        "imported_recipes": successes,
-        "failed": errors
-    }
+    results = []
+    for item in list_of_raws:
+        results.append(import_single_recipe(item))
+    return results

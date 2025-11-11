@@ -76,7 +76,6 @@ def test_normalize_universal_input_with_semantic_keys():
 def test_normalize_universal_input_ignores_unapproved_fields():
     raw = {"username": "  chef01 ", "email": " user@example.com "}
     result = normalize_universal_input(raw)
-    # should remain untouched
     assert result == raw
 
 def test_normalize_universal_input_mixed_fields():
@@ -88,7 +87,7 @@ def test_normalize_universal_input_mixed_fields():
     result = normalize_universal_input(raw)
     assert result == {
         "name": "Butter",
-        "temperature": "cold",  # unchanged
+        "temperature": "cold",
         "unit": "Cp"
     }
 
@@ -98,14 +97,12 @@ def test_normalize_universal_input_with_nested_dict():
         "metadata": {"creator": "chef"}
     }
     result = normalize_universal_input(raw)
-    # inner dict stays untouched because you don’t recursively clean (yet)
     assert result == raw
 
 def test_normalize_universal_input_fault_tolerance(monkeypatch):
     def bad_cleaner(value):
         raise ValueError("oops")
 
-    # temporarily add a broken cleaner
     import app.core.data_cleaner as cleaner_module
     cleaner_module.normalize_bad = bad_cleaner
 

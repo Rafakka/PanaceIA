@@ -98,7 +98,6 @@ class SpiceSchema(BaseModel):
         pairs_with_ingredients (List[str]): Ingredients it matches with.
         pairs_with_recipes (List[str]): Recipes it commonly appears in.
     """
-
     name: StrictStr
     flavor_profile: Optional[StrictStr] = None
     recommended_quantity: Optional[StrictStr] = None

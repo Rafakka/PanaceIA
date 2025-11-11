@@ -17,28 +17,60 @@ def import_bulk_endpoint(payload: list[dict] = Body(...)):
 
 @router.post("/spice", status_code=201)
 def import_single_spice_endpoint(spice: dict = Body(...)):
+    """
+    Import a single spice entry from an external source.
+    """
+
     cleaned = import_single_spice(spice)
+
     if cleaned["status"] == "error":
         return cleaned
-        
+
     data = cleaned["data"]
-    result = add_spice(data)
-    return {"status": "success", "message": result.get("message", "Spice imported successfully.")}
+
+    db_result = add_spice(data)
+
+    if db_result.get("status") == "success":
+        return {
+            "status": "success",
+            "name": data.get("name"),
+            "message": db_result.get("message", "Spice imported successfully.")
+        }
+    else:
+        return {
+            "status": "error",
+            "name": data.get("name"),
+            "message": db_result.get("message", "Failed to insert spice.")
+        }
 
 @router.post("/bulkspices", status_code=201)
 def import_bulk_spices_endpoint(spices: list[dict] = Body(...)):
     """
-    Import multiple spices in bulk.
+    Import multiple spices in bulk, each validated through the importer.
     """
-    results = []
-    for item in spices:
-        cleaned = import_single_spice(item)
-        if cleaned["status"] == "error":
-            results.append(cleaned)
+    normalized_results = import_bulk_spices(spices)
+
+    final_results = []
+
+    for item in normalized_results:
+        if item["status"] == "error":
+            final_results.append(item)
             continue
 
-        data = cleaned["data"]
-        added = add_spice(data)
-        results.append({"status": "success", "message": added.get("message", "Spice imported successfully.")})
+        data = item["data"]
 
-    return results
+        db_result = add_spice(data)
+
+        if db_result.get("status") == "success":
+            final_results.append({
+                "status": "success",
+                "name": data.get("name"),
+                "message": db_result.get("message", "Spice imported successfully.")
+            })
+        else:
+            final_results.append({
+                "status": "error",
+                "name": data.get("name"),
+                "message": db_result.get("message", "Failed to insert spice.")
+            })
+    return final_results

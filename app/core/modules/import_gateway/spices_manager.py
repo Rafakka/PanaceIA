@@ -3,7 +3,6 @@ from app.core.modules.spices.spices_manager import add_spice
 from app.core.data_cleaner import normalize_universal_input
 from app.core.modules.spices.utils.spice_bridge import link_spice_to_recipe, suggest_spices_for_recipe
 from typing import Dict, Any
-from app.core.utils.data_cleaner import normalize_universal_input
 
 def import_single_spice(raw_spice: Dict[str, Any]) -> Dict[str, Any]:
     """
